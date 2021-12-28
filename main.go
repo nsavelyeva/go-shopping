@@ -1,25 +1,26 @@
 package main
 
 import (
+	"github.com/fvbock/endless"
+	"github.com/gin-gonic/gin"
+
 	"github.com/nsavelyeva/go-shopping/controllers"
 	"github.com/nsavelyeva/go-shopping/models"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
+	router := gin.Default()
 
 	// Connect to database
 	models.ConnectDatabase()
 
 	// Routes
-	r.GET("/items", controllers.ListItems)
-	r.GET("/items/:id", controllers.FindItem)
-	r.POST("/items", controllers.CreateItem)
-	r.PATCH("/items/:id", controllers.UpdateItem)
-	r.DELETE("/items/:id", controllers.DeleteItem)
+	router.GET("/items", controllers.ListItems)
+	router.GET("/items/:id", controllers.FindItem)
+	router.POST("/items", controllers.CreateItem)
+	router.PATCH("/items/:id", controllers.UpdateItem)
+	router.DELETE("/items/:id", controllers.DeleteItem)
 
 	// Run the server
-	r.Run()
+	endless.ListenAndServe(":8080", router)   // instead of router.Run()
 }
