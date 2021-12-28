@@ -3,7 +3,10 @@ The project `go-shopping` is a playground to practice writing an HTTP service in
 The project represents a back-end microservice that serves HTTP calls to do basic CRUD (create/read/update/delete) operations
 on the items in a *small magic shop* :)
 
-The implementation of the project follows [this article](https://blog.logrocket.com/how-to-build-a-rest-api-with-golang-using-gin-and-gorm/).
+The implementation of the project was inspired by
+[this article](https://blog.logrocket.com/how-to-build-a-rest-api-with-golang-using-gin-and-gorm/)
+and follows [official documentation](https://github.com/gin-gonic/gin)
+and [this article](https://blog.hackajob.co/writing-and-testing-crud/).
 
 Start the HTTP service with:
 ```
