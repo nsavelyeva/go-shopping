@@ -11,6 +11,7 @@ func ListItems(db *gorm.DB) ([]models.Item, error) {
 	query := db.Select("items.*").
 		        Group("items.id").
 				Find(&items)
+	defer query.Close()
 	if err := query.Error; err != nil {
 		return items, err
 	}
@@ -24,6 +25,7 @@ func FindItem(db *gorm.DB, id string) (models.Item, bool, error) {
 			    Group("items.id").
 				Where("items.id = ?", id).
 				First(&item)
+	defer query.Close()
 	err := query.Error
 	if err != nil && !gorm.IsRecordNotFoundError(err) {
 		return item, false, err

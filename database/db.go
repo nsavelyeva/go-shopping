@@ -24,3 +24,14 @@ func Setup() {
 func GetDB() *gorm.DB {
 	return DB
 }
+
+func ClearTable() {
+	//DB.Lock()
+	DB.Begin()
+	DB.Exec("DELETE FROM `items` WHERE 1=1")
+	DB.Exec("ALTER SEQUENCE items_id_seq RESTART WITH 1")
+	//DB.Exec("UPDATE `sqlite_sequence` SET `seq` = 0 WHERE `name` = 'items'")
+	DB.Commit()
+	//DB.Unlock()
+	//DB.Exec("ALTER SEQUENCE items_id_seq RESTART WITH 1")
+}

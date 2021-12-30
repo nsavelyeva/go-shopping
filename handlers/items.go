@@ -21,7 +21,7 @@ func (a *APIEnv) ListItems(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"items": items})
+	c.JSON(http.StatusOK, gin.H{"data": items})
 }
 
 // GET /items/:id
@@ -33,10 +33,10 @@ func (a *APIEnv) FindItem(c *gin.Context) {
 		return
 	}
 	if found {
-		c.JSON(http.StatusOK, gin.H{"item": item})
+		c.JSON(http.StatusOK, gin.H{"data": item})
 		return
 	}
-	c.JSON(http.StatusNoContent, gin.H{"item": nil})
+	c.JSON(http.StatusNoContent, gin.H{"data": nil})
 }
 
 // POST /items
@@ -55,7 +55,7 @@ func (a *APIEnv) CreateItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"item": item})
+	c.JSON(http.StatusOK, gin.H{"data": item})
 }
 
 // PATCH /items/:id
@@ -73,7 +73,7 @@ func (a *APIEnv) UpdateItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"item": item})
+	c.JSON(http.StatusOK, gin.H{"data": item})
 }
 
 // DELETE /items/:id

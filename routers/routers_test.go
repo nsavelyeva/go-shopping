@@ -1,6 +1,7 @@
 package routers
-// TODO: Fix clearing tables, otherwise use workaround:
-// remove manually the file routers/items.db before running tests
+
+// TODO: fix DB error 'database is locked' in Test_CreateItem_OK.
+
 import (
 	"bytes"
 	"encoding/json"
@@ -9,18 +10,41 @@ import (
 	"github.com/nsavelyeva/go-shopping/database"
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/models"
+	"github.com/nsavelyeva/go-shopping/test"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func Test_ListItems_EmptyResult(t *testing.T) {
+func setupSuite(tb testing.TB) func(tb testing.TB) {
+	log.Println("setup suite")
 	database.Setup()
-	db := database.GetDB()
-	req, w := setListItemsRouter(db)
-	defer db.Close()
+	test.DB = database.GetDB()
+
+	// Return a function to teardown the test
+	return func(tb testing.TB) {
+		log.Println("teardown suite")
+		test.DB.Close()
+	}
+}
+
+// Almost the same as the above, but this one is for single test instead of collection of tests
+func setupTest(tb testing.TB) func(tb testing.TB) {
+	log.Println("setup test")
+
+	return func(tb testing.TB) {
+		log.Println("teardown test")
+		database.ClearTable()
+	}
+}
+
+func Test_ListItems_EmptyResult(t *testing.T) {
+	teardownSuite := setupSuite(t)
+	defer teardownSuite(t)
+	req, w := setListItemsRouter(test.DB)
 
 	a := assert.New(t)
 	a.Equal(http.MethodGet, req.Method, "HTTP request method error")
@@ -36,25 +60,23 @@ func Test_ListItems_EmptyResult(t *testing.T) {
 		a.Error(err)
 	}
 
-	a.Equal([]models.Item{}, actual.Items)
-	database.ClearTable()
+	a.Equal([]models.Item(nil), actual.Data)
 }
 
 func Test_FindItem_OK(t *testing.T) {
+	teardownSuite := setupSuite(t)
+	defer teardownSuite(t)
 	a := assert.New(t)
-	database.Setup()
-	db := database.GetDB()
 
-	item, err := insertTestItem(db)
+	item, err := insertTestItem(test.DB)
 	if err != nil {
 		a.Error(err)
 	}
 
-	req, w := setFindItemRouter(db,"/items/1")
-	defer db.Close()
+	req, w := setFindItemRouter(test.DB,"/items/1")
 
 	a.Equal(http.MethodGet, req.Method, "HTTP request method error")
-	//a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
+	a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
 
 	body, err := ioutil.ReadAll(w.Body)
 	if err != nil {
@@ -65,23 +87,22 @@ func Test_FindItem_OK(t *testing.T) {
 	if err := json.Unmarshal(body, &actual); err != nil {
 		a.Error(err)
 	}
-	actual.Item.Model = gorm.Model{}
+	actual.Data.Model = gorm.Model{}
 	expected := item
 	expected.Model = gorm.Model{}
-	a.Equal(expected.Name, actual.Item.Name)
-	a.Equal(expected.Price, actual.Item.Price)
-	a.NotNil(actual.Item.Sold)
-	a.NotNil(actual.Item.ID)
-	a.NotNil(actual.Item.CreatedAt)
-	a.NotNil(actual.Item.UpdatedAt)
-	a.Nil(actual.Item.DeletedAt)
-	database.ClearTable()
+	a.Equal(expected.Name, actual.Data.Name)
+	a.Equal(expected.Price, actual.Data.Price)
+	a.NotNil(actual.Data.Sold)
+	a.NotNil(actual.Data.ID)
+	a.NotNil(actual.Data.CreatedAt)
+	a.NotNil(actual.Data.UpdatedAt)
+	a.Nil(actual.Data.DeletedAt)
 }
 
 func Test_CreateItem_OK(t *testing.T) {
+	teardownSuite := setupSuite(t)
+	defer teardownSuite(t)
 	a := assert.New(t)
-	database.Setup()
-	db := database.GetDB()
 	item := models.CreateItemInput{
 		Name: "test",
 		Price: 10.99,
@@ -92,15 +113,16 @@ func Test_CreateItem_OK(t *testing.T) {
 		a.Error(err)
 	}
 
-	req, w, err := setCreateItemRouter(db, bytes.NewBuffer(reqBody))
+	req, w, err := setCreateItemRouter(test.DB, bytes.NewBuffer(reqBody))
 	if err != nil {
 		a.Error(err)
 	}
 
 	a.Equal(http.MethodPost, req.Method, "HTTP request method error")
-	a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
+	//a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
 
 	body, err := ioutil.ReadAll(w.Body)
+	a.Equal(1, string(body))
 	if err != nil {
 		a.Error(err)
 	}
@@ -110,16 +132,15 @@ func Test_CreateItem_OK(t *testing.T) {
 		a.Error(err)
 	}
 
-	actual.Item.Model = gorm.Model{}
-	a.Equal(item.Name, actual.Item.Name)
-	a.Equal(item.Price, actual.Item.Price)
-	a.Equal(false, actual.Item.Sold)
-	a.NotNil(actual.Item.ID)
-	a.NotNil(actual.Item.CreatedAt)
-	a.NotNil(actual.Item.UpdatedAt)
-	a.Equal(actual.Item.CreatedAt, actual.Item.UpdatedAt)
-	a.Nil(actual.Item.DeletedAt)
-	database.ClearTable()
+	actual.Data.Model = gorm.Model{}
+	a.Equal(item.Name, actual.Data.Name)
+	a.Equal(item.Price, actual.Data.Price)
+	a.Equal(false, actual.Data.Sold)
+	a.NotNil(actual.Data.ID)
+	a.NotNil(actual.Data.CreatedAt)
+	a.NotNil(actual.Data.UpdatedAt)
+	a.Equal(actual.Data.CreatedAt, actual.Data.UpdatedAt)
+	a.Nil(actual.Data.DeletedAt)
 }
 
 func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder) {
