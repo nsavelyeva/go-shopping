@@ -15,9 +15,15 @@ the application is separated into 3 layers:
 - _services_: contain the business logic;
 - _handlers_: accept requests and builds the responses.
 
-Start the HTTP service with:
+Run all tests in the project, but remove the db file first (workaround):
 ```
-$ go run main.go
+rm -f routers/items.db
+go test ./...
+```
+
+If all tests pass, start the HTTP service with:
+```
+go run main.go
 ```
 and the service will run on `localhost:8080`.
 

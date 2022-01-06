@@ -1,5 +1,5 @@
 package routers
-
+// Unit tests [with setup/teardown] to verify every route, real database is used.
 // TODO: fix clearing DB in Test_ListItems_EmptyResult, till then -
 // a workaround: delete routers/items.db before running tests.
 

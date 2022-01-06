@@ -20,7 +20,7 @@ type ItemRepository interface {
 	UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error)
 	DeleteItem(id string) error
 	GetDB() *gorm.DB
-	ClearTable()  *gorm.DB  // TODO: move to mock?
+	ClearTable()  *gorm.DB
 }
 
 type itemRepository struct {

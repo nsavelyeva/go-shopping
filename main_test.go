@@ -1,4 +1,7 @@
 package main
+// A quick [smoke] test that verifies a single API route and uses real database (read).
+// The test starts and terminates HTTP server automatically, i.e. no need to execute "go run main.go".
+// More tests to verify API routes are kept in routers/routers_test.go file.
 
 import (
 	"encoding/json"

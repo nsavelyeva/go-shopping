@@ -15,7 +15,7 @@ type Provider struct {
 
 func NewProvider() *Provider {
 	var p Provider
-	s := services.NewItemService()
+	s := services.NewItemService(nil)
 	p.s = s
 	return &p
 }
@@ -29,7 +29,7 @@ func (p *Provider) GetItemService() services.ItemService {
 		return *p.s
 	}
 
-	s := services.NewItemService()
+	s := services.NewItemService(nil)
 
 	return *s
 }

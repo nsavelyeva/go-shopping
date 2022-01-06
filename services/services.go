@@ -20,10 +20,12 @@ type itemService struct {
     r *repository.ItemRepository
 }
 
-func NewItemService() *ItemService {
-	r := repository.NewItemRepository()
+func NewItemService(r repository.ItemRepository) *ItemService {
+	if r == nil {
+		r = *repository.NewItemRepository()
+	}
 	var p itemService
-	p.SetItemRepository(*r)
+	p.SetItemRepository(r)
 	var s ItemService = &p
 
 	return &s
