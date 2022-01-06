@@ -5,6 +5,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
+	"github.com/nsavelyeva/go-shopping/repository"
 	"github.com/nsavelyeva/go-shopping/services"
 	"net/http"
 )
@@ -13,10 +14,14 @@ type Provider struct {
 	s *services.ItemService
 }
 
-func NewProvider() *Provider {
+func NewProvider(s services.ItemService, r repository.ItemRepository) *Provider {
+	if s == nil {
+		s = *services.NewItemService(r)
+	} else {
+		s.SetItemRepository(r)
+	}
 	var p Provider
-	s := services.NewItemService(nil)
-	p.s = s
+	p.SetItemService(s)
 	return &p
 }
 
@@ -24,19 +29,19 @@ func (p *Provider) SetItemService(s services.ItemService) {
 	p.s = &s
 }
 
-func (p *Provider) GetItemService() services.ItemService {
+func (p *Provider) GetItemService(r repository.ItemRepository) services.ItemService {
 	if p.s != nil {
 		return *p.s
 	}
 
-	s := services.NewItemService(nil)
+	s := services.NewItemService(r)
 
 	return *s
 }
 
 // GET /items - List all items
 func (p *Provider) ListItems(c *gin.Context) {
-	s := p.GetItemService()
+	s := p.GetItemService(nil)
 	items, err := s.ListItems()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -47,7 +52,7 @@ func (p *Provider) ListItems(c *gin.Context) {
 
 // GET /items/:id - Find an item
 func (p *Provider) FindItem(c *gin.Context) {
-	s := p.GetItemService()
+	s := p.GetItemService(nil)
 	item, found, err := s.FindItem(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
@@ -70,7 +75,7 @@ func (p *Provider) CreateItem(c *gin.Context) {
 	}
 
 	// Create an item
-	s := p.GetItemService()
+	s := p.GetItemService(nil)
 	item, err := s.CreateItem(input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -88,7 +93,7 @@ func (p *Provider) UpdateItem(c *gin.Context) {
 		return
 	}
 
-	s := p.GetItemService()
+	s := p.GetItemService(nil)
 	item, err := s.UpdateItem(c.Param("id"), input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -99,7 +104,7 @@ func (p *Provider) UpdateItem(c *gin.Context) {
 
 // DELETE /items/:id - Delete an item
 func (p *Provider) DeleteItem(c *gin.Context) {
-	s := p.GetItemService()
+	s := p.GetItemService(nil)
 	if err := s.DeleteItem(c.Param("id")); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
 		return

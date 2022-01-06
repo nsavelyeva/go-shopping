@@ -8,7 +8,7 @@ import (
 func Setup() *gin.Engine {
 	router := gin.Default()
 
-	var h = handlers.NewProvider()
+	var h = handlers.NewProvider(nil, nil)
 	// Routes
 	router.GET("/items", h.ListItems)
 	router.GET("/items/:id", h.FindItem)

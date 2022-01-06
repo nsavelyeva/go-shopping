@@ -14,6 +14,7 @@ type ItemService interface {
 	CreateItem(input models.CreateItemInput) (models.Item, error)
 	UpdateItem(id string, input models.UpdateItemInput) (models.Item, error)
 	DeleteItem(id string) error
+	SetItemRepository(r repository.ItemRepository)
 }
 
 type itemService struct {

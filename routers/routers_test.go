@@ -147,7 +147,7 @@ func Test_CreateItem_OK(t *testing.T) {
 
 func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder) {
 	r := gin.New()
-	var h = handlers.NewProvider()
+	var h = handlers.NewProvider(nil, nil) // TODO: try to use mocks!
 	r.GET("/items", h.ListItems)
 	req, err := http.NewRequest(http.MethodGet, "/items", nil)
 	if err != nil {
@@ -164,7 +164,7 @@ func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder)
 func setCreateItemRouter(db *gorm.DB,
 	body *bytes.Buffer) (*http.Request, *httptest.ResponseRecorder, error) {
 	r := gin.New()
-	var h = handlers.NewProvider()
+	var h = handlers.NewProvider(nil, nil) // TODO: try to use mocks!
 	r.POST("/items", h.CreateItem)
 	req, err := http.NewRequest(http.MethodPost, "/items", body)
 	if err != nil {
@@ -179,7 +179,7 @@ func setCreateItemRouter(db *gorm.DB,
 
 func setFindItemRouter(db *gorm.DB, url string) (*http.Request, *httptest.ResponseRecorder) {
 	r := gin.New()
-	var h = handlers.NewProvider()
+	var h = handlers.NewProvider(nil, nil) // TODO: try to use mocks!
 	r.GET("/items/:id", h.FindItem)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
