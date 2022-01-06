@@ -1,15 +1,16 @@
 package routers
 
-// TODO: fix DB error 'database is locked' in Test_CreateItem_OK.
+// TODO: fix clearing DB in Test_ListItems_EmptyResult, till then -
+// a workaround: delete routers/items.db before running tests.
 
 import (
 	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	"github.com/nsavelyeva/go-shopping/database"
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/models"
+	"github.com/nsavelyeva/go-shopping/repository"
 	"github.com/nsavelyeva/go-shopping/test"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -21,13 +22,15 @@ import (
 
 func setupSuite(tb testing.TB) func(tb testing.TB) {
 	log.Println("setup suite")
-	database.Setup()
-	test.DB = database.GetDB()
+
+	var r repository.ItemRepository
+	r = *repository.NewItemRepository()
+	test.R = r
 
 	// Return a function to teardown the test
 	return func(tb testing.TB) {
 		log.Println("teardown suite")
-		test.DB.Close()
+		test.R.GetDB().Close()
 	}
 }
 
@@ -37,7 +40,7 @@ func setupTest(tb testing.TB) func(tb testing.TB) {
 
 	return func(tb testing.TB) {
 		log.Println("teardown test")
-		database.ClearTable()
+		test.R.ClearTable()
 	}
 }
 
@@ -60,7 +63,7 @@ func Test_ListItems_EmptyResult(t *testing.T) {
 		a.Error(err)
 	}
 
-	a.Equal([]models.Item(nil), actual.Data)
+	a.Equal([]models.Item{}, actual.Data)
 }
 
 func Test_FindItem_OK(t *testing.T) {
@@ -119,10 +122,9 @@ func Test_CreateItem_OK(t *testing.T) {
 	}
 
 	a.Equal(http.MethodPost, req.Method, "HTTP request method error")
-	//a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
+	a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
 
 	body, err := ioutil.ReadAll(w.Body)
-	a.Equal(1, string(body))
 	if err != nil {
 		a.Error(err)
 	}
@@ -145,8 +147,8 @@ func Test_CreateItem_OK(t *testing.T) {
 
 func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder) {
 	r := gin.New()
-	api := &handlers.APIEnv{DB: db}
-	r.GET("/items", api.ListItems)
+	var h = handlers.NewProvider()
+	r.GET("/items", h.ListItems)
 	req, err := http.NewRequest(http.MethodGet, "/items", nil)
 	if err != nil {
 		panic(err)
@@ -162,8 +164,8 @@ func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder)
 func setCreateItemRouter(db *gorm.DB,
 	body *bytes.Buffer) (*http.Request, *httptest.ResponseRecorder, error) {
 	r := gin.New()
-	api := &handlers.APIEnv{DB: db}
-	r.POST("/items", api.CreateItem)
+	var h = handlers.NewProvider()
+	r.POST("/items", h.CreateItem)
 	req, err := http.NewRequest(http.MethodPost, "/items", body)
 	if err != nil {
 		return req, httptest.NewRecorder(), err
@@ -177,8 +179,8 @@ func setCreateItemRouter(db *gorm.DB,
 
 func setFindItemRouter(db *gorm.DB, url string) (*http.Request, *httptest.ResponseRecorder) {
 	r := gin.New()
-	api := &handlers.APIEnv{DB: db}
-	r.GET("/items/:id", api.FindItem)
+	var h = handlers.NewProvider()
+	r.GET("/items/:id", h.FindItem)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -192,12 +194,11 @@ func setFindItemRouter(db *gorm.DB, url string) (*http.Request, *httptest.Respon
 }
 
 func insertTestItem(db *gorm.DB) (*models.Item, error){
-	api := &handlers.APIEnv{DB: db}
 	input := models.CreateItemInput{
 		Name: "test item",
 		Price: 100.0,
 	}
-	item, err := database.CreateItem(api.DB, &input)
+	item, err := test.R.CreateItem(&input)
 	if err != nil {
 		return &models.Item{}, err
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/nsavelyeva/go-shopping/database"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/routers"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 )
 
 func TestFindItemRoute(t *testing.T) {
-	database.Setup()
 	router := routers.Setup()
 
 	w := httptest.NewRecorder()
@@ -23,7 +21,7 @@ func TestFindItemRoute(t *testing.T) {
 	var want models.ItemResponse
 	var got models.ItemResponse
 
-	json.Unmarshal([]byte(`{"data":{"name":"Aladdin's lamp","price":999,"sold":true}}`), &want)
+	json.Unmarshal([]byte(`{"data":{"ID":1,"name":"Aladdin's lamp","price":999,"sold":true}}`), &want)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
 	assert.Equal(t, 200, w.Code)

@@ -1,31 +1,31 @@
 package services
+// The services layer is responsible for the business logic of the application.
+// The service layer will delegate reading and writing data to the repositories and external API clients,
+// so that it can focus on the business logic.
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
-	"github.com/nsavelyeva/go-shopping/repository"
 	"github.com/nsavelyeva/go-shopping/models"
-	"net/http"
+	"github.com/nsavelyeva/go-shopping/repository"
 )
 
 type ItemService interface {
-	ListItems()
-	FindItem()
-	CreateItem()
-	UpdateItem()
-	DeleteItem()
+	ListItems() ([]models.Item, error)
+	FindItem(id string) (models.Item, bool, error)
+	CreateItem(input models.CreateItemInput) (models.Item, error)
+	UpdateItem(id string, input models.UpdateItemInput) (models.Item, error)
+	DeleteItem(id string) error
 }
 
 type itemService struct {
-	c *gin.Context
     r *repository.ItemRepository
-	db *gorm.DB
 }
 
 func NewItemService() *ItemService {
 	r := repository.NewItemRepository()
+	var p itemService
+	p.SetItemRepository(*r)
+	var s ItemService = &p
 
-	var s ItemService = &itemService{r: r}
 	return &s
 }
 
@@ -39,79 +39,42 @@ func (s *itemService) GetItemRepository() repository.ItemRepository {
 	}
 
 	r := repository.NewItemRepository()
+
 	return *r
 }
 
-// GET /items
-// List all items
-func (s *itemService) ListItems() {
-	items, err := s.r.ListItems()
-	if err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	s.c.JSON(http.StatusOK, gin.H{"data": items})
+// GET /items - List all items
+func (s *itemService) ListItems() ([]models.Item, error) {
+	items, err := s.GetItemRepository().ListItems()
+	return items, err
 }
 
-// GET /items/:id
-// Find an item
-func (s *itemService) FindItem() {
-	item, found, err := s.r.FindItem(s.db, s.c.Param("id"))
-	if err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
-		return
-	}
-	if found {
-		s.c.JSON(http.StatusOK, gin.H{"data": item})
-		return
-	}
-	s.c.JSON(http.StatusNoContent, gin.H{"data": nil})
+// GET /items/:id - Find an item
+func (s *itemService) FindItem(id string) (models.Item, bool, error) {
+	r := s.GetItemRepository()
+	item, found, err := r.FindItem(id)
+	return item, found, err
 }
 
-// POST /items
-// Create new item
-func (s *itemService) CreateItem() {
-	// Validate input
-	var input models.CreateItemInput
-	if err := s.c.ShouldBindJSON(&input); err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Create item
-	item, err := s.r.CreateItem(s.db, &input)
-	if err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	s.c.JSON(http.StatusOK, gin.H{"data": item})
+// POST /items - Create a new item
+func (s *itemService) CreateItem(input models.CreateItemInput) (models.Item, error) {
+	// Assumed input is validated on upper (handlers) layer
+	r := s.GetItemRepository()
+	item, err := r.CreateItem(&input)
+	return *item, err
 }
 
-// PATCH /items/:id
-// Update an item
-func (s *itemService) UpdateItem() {
-	// Validate input
-	var input models.UpdateItemInput
-	if err := s.c.ShouldBindJSON(&input); err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	item, err := s.r.UpdateItem(s.db, s.c.Param("id"), &input)
-	if err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	s.c.JSON(http.StatusOK, gin.H{"data": item})
+// PATCH /items/:id - Update an item
+func (s *itemService) UpdateItem(id string, input models.UpdateItemInput) (models.Item, error) {
+	// Assumed input is validated on upper (handlers) layer
+	r := s.GetItemRepository()
+	item, err := r.UpdateItem(id, &input)
+	return *item, err
 }
 
-// DELETE /items/:id
-// Delete an item
-func (s *itemService) DeleteItem() {
-	if err := s.r.DeleteItem(s.db, s.c.Param("id")); err != nil {
-		s.c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
-		return
-	}
-	s.c.JSON(http.StatusOK, gin.H{"deleted": true})
+// DELETE /items/:id - Delete an item
+func (s *itemService) DeleteItem(id string) error {
+	r := s.GetItemRepository()
+	err := r.DeleteItem(id)
+	return err
 }
-

@@ -1,17 +1,16 @@
 package repository
+// The repository layer is responsible for connecting directly to the database to retrieve and/or modify records.
 
 import (
 	"errors"
-//	"fmt"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"log"
-
 	//"github.com/jinzhu/gorm/dialects/mysql"
 	//"github.com/jinzhu/gorm/dialects/postgres"
 	//"github.com/jinzhu/gorm/dialects/sqlite"
 	// "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/jinzhu/gorm"
 	"github.com/nsavelyeva/go-shopping/models"
-	//"log"
 )
 
 type ItemRepository interface {
@@ -20,9 +19,10 @@ type ItemRepository interface {
 	CreateItem(input *models.CreateItemInput) (*models.Item, error)
 	UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error)
 	DeleteItem(id string) error
+	GetDB() *gorm.DB
+	ClearTable()  *gorm.DB  // TODO: move to mock?
 }
 
-// repository represent the repository model
 type itemRepository struct {
 	db *gorm.DB
 }
@@ -31,8 +31,11 @@ func NewItemRepository() *ItemRepository {
 	db, err := gorm.Open("sqlite3", "items.db")
 
 	if err != nil {
-		log.Fatal("Failed to connect to the database!")
+		log.Fatalf("Failed to connect to the database due to error: %s", err)
 	}
+	db.LogMode(false)
+	db.AutoMigrate(&models.Item{})
+
 	var r ItemRepository = &itemRepository{db: db}
 	return &r
 }
@@ -41,16 +44,29 @@ func (r *itemRepository) SetDB(db gorm.DB) {
 	r.db = &db
 }
 
-func (r *itemRepository) GetDB() gorm.DB {
-	if r.db != nil {
-		return *r.db
+func (r *itemRepository) GetDB() *gorm.DB {
+	if r.db.DB().Ping() != nil {
+		return r.db
 	}
 	// TODO: de-couple into a separate method
 	db, err := gorm.Open("sqlite3", "items.db")
 	if err != nil {
-		log.Fatal("Failed to connect to the database!")
+		log.Fatalf("Failed to connect to the database due to error: %s", err)
 	}
-	return *db
+	return db
+}
+
+// TODO: fix queries to clear the records in the database
+func (r *itemRepository) ClearTable()  *gorm.DB {
+	//DB.Lock()
+	r.db.Begin()
+	r.db.Exec("DELETE FROM `items` WHERE 1=1")
+	r.db.Exec("ALTER SEQUENCE items_id_seq RESTART WITH 1")
+	//DB.Exec("UPDATE `sqlite_sequence` SET `seq` = 0 WHERE `name` = 'items'")
+	r.db.Commit()
+	//DB.Unlock()
+	//DB.Exec("ALTER SEQUENCE items_id_seq RESTART WITH 1")
+	return r.db
 }
 
 /*
@@ -106,6 +122,7 @@ func DialectPostgreSQL(host string, port string, user string, password string, d
 	}
 }
 */
+
 // Close attaches the provider and close the connection
 func (r *itemRepository) Close() {
 	r.db.Close()
@@ -113,7 +130,7 @@ func (r *itemRepository) Close() {
 
 func (r *itemRepository) ListItems() ([]models.Item, error) {
 	items := []models.Item{}
-	query := r.db.Select("items.*").
+	query := r.GetDB().Select("items.*").
 		Group("items.id").
 		Find(&items)
 	defer query.Close()
@@ -126,7 +143,7 @@ func (r *itemRepository) ListItems() ([]models.Item, error) {
 
 func (r *itemRepository) FindItem(id string) (models.Item, bool, error) {
 	item := models.Item{}
-	query := r.db.Select("items.*").
+	query := r.GetDB().Select("items.*").
 		Group("items.id").
 		Where("items.id = ?", id).
 		First(&item)
@@ -143,8 +160,12 @@ func (r *itemRepository) FindItem(id string) (models.Item, bool, error) {
 }
 
 func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item, error) {
-	item := models.Item{Name: input.Name, Price: input.Price, Sold: false}
-	if err := r.db.Save(&item).Error; err != nil {
+	item := models.Item{
+		Name: input.Name,
+		Price: input.Price,
+		Sold: false,
+	}
+	if err := r.GetDB().Save(&item).Error; err != nil {
 		return nil, err
 	}
 	return &item, nil
@@ -155,20 +176,21 @@ func (r *itemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*
 	if err != nil || !found {
 		return nil, errors.New("Item not found")
 	}
-	data := models.Item{Name: input.Name, Price: input.Price, Sold: input.Sold}
-	if err := r.db.Model(&item).Updates(data).Error; err != nil {
+	data := models.Item{
+		Name: input.Name,
+		Price: input.Price,
+		Sold: input.Sold,
+	}
+	if err := r.GetDB().Model(&item).Updates(data).Error; err != nil {
 		return nil, err
 	}
 	return &item, nil
 }
 
-
 func (r *itemRepository) DeleteItem(id string) error {
 	var item models.Item
-	if err := r.db.Where("id = ? ", id).Delete(&item).Error; err != nil {
+	if err := r.GetDB().Where("id = ? ", id).Delete(&item).Error; err != nil {
 		return err
 	}
 	return nil
 }
-
-
