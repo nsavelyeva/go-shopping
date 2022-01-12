@@ -15,7 +15,7 @@ import (
 
 type ItemRepository interface {
 	ListItems() ([]models.Item, error)
-	FindItem(id string) (models.Item, bool, error)
+	FindItem(id string) (*models.Item, bool, error)
 	CreateItem(input *models.CreateItemInput) (*models.Item, error)
 	UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error)
 	DeleteItem(id string) error
@@ -24,19 +24,25 @@ type ItemRepository interface {
 }
 
 type itemRepository struct {
+	dn string   // driverName
+	cs string   // connectionString
 	db *gorm.DB
 }
 
-func NewItemRepository() *ItemRepository {
-	db, err := gorm.Open("sqlite3", "items.db")
-
+func ConnectDB(driverName string, connectionString string) (*gorm.DB, error) {
+	db, err := gorm.Open(driverName, connectionString)
 	if err != nil {
 		log.Fatalf("Failed to connect to the database due to error: %s", err)
 	}
+	return db, err
+}
+
+func NewItemRepository(driverName string, connectionString string) *ItemRepository {
+	db, _ := ConnectDB(driverName, connectionString)
 	db.LogMode(false)
 	db.AutoMigrate(&models.Item{})
 
-	var r ItemRepository = &itemRepository{db: db}
+	var r ItemRepository = &itemRepository{dn: driverName, cs: connectionString, db: db}
 	return &r
 }
 
@@ -48,11 +54,7 @@ func (r *itemRepository) GetDB() *gorm.DB {
 	if r.db.DB().Ping() != nil {
 		return r.db
 	}
-	// TODO: de-couple into a separate method
-	db, err := gorm.Open("sqlite3", "items.db")
-	if err != nil {
-		log.Fatalf("Failed to connect to the database due to error: %s", err)
-	}
+	db, _ := ConnectDB(r.dn, r.cs)
 	return db
 }
 
@@ -129,34 +131,38 @@ func (r *itemRepository) Close() {
 }
 
 func (r *itemRepository) ListItems() ([]models.Item, error) {
-	items := []models.Item{}
+	var items []models.Item
 	query := r.GetDB().Select("items.*").
 		Group("items.id").
 		Find(&items)
 	defer query.Close()
+
+	if query.RecordNotFound() {
+		return nil, nil
+	}
 	if err := query.Error; err != nil {
-		return items, err
+		return nil, err
 	}
 
 	return items, nil
 }
 
-func (r *itemRepository) FindItem(id string) (models.Item, bool, error) {
-	item := models.Item{}
+func (r *itemRepository) FindItem(id string) (*models.Item, bool, error) {
+	var item models.Item
 	query := r.GetDB().Select("items.*").
 		Group("items.id").
 		Where("items.id = ?", id).
 		First(&item)
 	defer query.Close()
-	err := query.Error
-	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		return item, false, err
+
+	if query.RecordNotFound() {
+		return nil, false, nil
+	}
+	if err := query.Error; err != nil {
+		return nil, false, err
 	}
 
-	if gorm.IsRecordNotFoundError(err) {
-		return item, false, nil
-	}
-	return item, true, nil
+	return &item, true, nil
 }
 
 func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item, error) {
@@ -174,7 +180,7 @@ func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item
 func (r *itemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error) {
 	item, found, err := r.FindItem(id)
 	if err != nil || !found {
-		return nil, errors.New("Item not found")
+		return nil, errors.New("item not found")
 	}
 	data := models.Item{
 		Name: input.Name,
@@ -184,7 +190,7 @@ func (r *itemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*
 	if err := r.GetDB().Model(&item).Updates(data).Error; err != nil {
 		return nil, err
 	}
-	return &item, nil
+	return item, nil
 }
 
 func (r *itemRepository) DeleteItem(id string) error {

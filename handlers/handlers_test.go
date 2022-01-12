@@ -7,29 +7,31 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"net/http/httptest"
 	"testing"
 )
+
 /*
-func TestNewProvider(t *testing.T) {
+func TestNewHandler(t *testing.T) {
 	tests := []struct {
 		name string
-		want *Provider
+		want *itemHandler
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewProvider(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewProvider() = %v, want %v", got, tt.want)
+			if got := NewItemHandler(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewItemHandler() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestProvider_CreateItem(t *testing.T) {
+func TestHandler_CreateItem(t *testing.T) {
 	type fields struct {
 		s *services.ItemService
 	}
@@ -45,14 +47,14 @@ func TestProvider_CreateItem(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Provider{
+			p := &itemHandler{
 				s: tt.fields.s,
 			}
 		})
 	}
 }
 
-func TestProvider_DeleteItem(t *testing.T) {
+func TestHandler_DeleteItem(t *testing.T) {
 	type fields struct {
 		s *services.ItemService
 	}
@@ -68,14 +70,14 @@ func TestProvider_DeleteItem(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Provider{
+			p := &itemHandler{
 				s: tt.fields.s,
 			}
 		})
 	}
 }
 
-func TestProvider_FindItem(t *testing.T) {
+func TestHandler_FindItem(t *testing.T) {
 	type fields struct {
 		s *services.ItemService
 	}
@@ -91,14 +93,14 @@ func TestProvider_FindItem(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Provider{
+			p := &itemHandler{
 				s: tt.fields.s,
 			}
 		})
 	}
 }
 
-func TestProvider_GetItemService(t *testing.T) {
+func TestHandler_GetItemService(t *testing.T) {
 	type fields struct {
 		s *services.ItemService
 	}
@@ -111,7 +113,7 @@ func TestProvider_GetItemService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Provider{
+			p := &itemHandler{
 				s: tt.fields.s,
 			}
 			if got := p.GetItemService(); !reflect.DeepEqual(got, tt.want) {
@@ -121,7 +123,7 @@ func TestProvider_GetItemService(t *testing.T) {
 	}
 }
 */
-func TestProvider_ListItems(t *testing.T) {
+func TestHandler_ListItems(t *testing.T) {
 	tests := []struct {
 		name       string
 		data       []models.Item
@@ -138,12 +140,12 @@ func TestProvider_ListItems(t *testing.T) {
 			gin.SetMode(gin.TestMode)
 			c, _ := gin.CreateTestContext(w)
 
-			repo := test.NewItemRepository()
+			repo := test.NewItemRepository(mocket.DriverName, "connection_string")
 			serv := test.NewItemService(repo)
 			serv.On("SetItemRepository", mock.Anything).Return()
 			serv.On("ListItems", mock.Anything).Return(tt.data, tt.err)
 
-			p := *NewProvider(serv, repo)
+			p := NewItemHandler(serv)
 			p.ListItems(c)
 
 			assert.Equal(t, tt.wantCode, w.Code)
@@ -152,7 +154,7 @@ func TestProvider_ListItems(t *testing.T) {
 	}
 }
 /*
-func TestProvider_SetItemService(t *testing.T) {
+func TestHandler_SetItemService(t *testing.T) {
 	type fields struct {
 		s *services.ItemService
 	}
@@ -168,14 +170,14 @@ func TestProvider_SetItemService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Provider{
+			p := &itemHandler{
 				s: tt.fields.s,
 			}
 		})
 	}
 }
 
-func TestProvider_UpdateItem(t *testing.T) {
+func TestHandler_UpdateItem(t *testing.T) {
 	type fields struct {
 		s *services.ItemService
 	}
@@ -191,7 +193,7 @@ func TestProvider_UpdateItem(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Provider{
+			p := &itemHandler{
 				s: tt.fields.s,
 			}
 		})

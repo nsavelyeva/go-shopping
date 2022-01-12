@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"reflect"
@@ -163,7 +164,7 @@ func Test_itemService_ListItems(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			repo := test.NewItemRepository()
+			repo := test.NewItemRepository(mocket.DriverName, "connection_string")
 			s := *NewItemService(repo)
 			repo.On("ListItems", mock.Anything).Return(tt.want, tt.err)
 			got, err := s.ListItems()

@@ -5,43 +5,48 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
-	"github.com/nsavelyeva/go-shopping/repository"
 	"github.com/nsavelyeva/go-shopping/services"
+	"log"
 	"net/http"
 )
 
-type Provider struct {
+type ItemHandler interface {
+	ListItems(c *gin.Context)
+	FindItem(c *gin.Context)
+	CreateItem(c *gin.Context)
+	UpdateItem(c *gin.Context)
+	DeleteItem(c *gin.Context)
+}
+
+type itemHandler struct {
 	s *services.ItemService
 }
 
-func NewProvider(s services.ItemService, r repository.ItemRepository) *Provider {
+func NewItemHandler(s services.ItemService) ItemHandler {
 	if s == nil {
-		s = *services.NewItemService(r)
-	} else {
-		s.SetItemRepository(r)
+		log.Fatal("Failed to initialize item handler, service is nil")
+		return nil
 	}
-	var p Provider
-	p.SetItemService(s)
+	var p = itemHandler{s: &s}
 	return &p
 }
 
-func (p *Provider) SetItemService(s services.ItemService) {
-	p.s = &s
+func (h *itemHandler) SetItemService(s services.ItemService) {
+	h.s = &s
 }
 
-func (p *Provider) GetItemService(r repository.ItemRepository) services.ItemService {
-	if p.s != nil {
-		return *p.s
+func (h *itemHandler) GetItemService() services.ItemService {
+	if h.s == nil {
+		log.Fatal("Failed to get item service, it is nil")
+		return nil
 	}
 
-	s := services.NewItemService(r)
-
-	return *s
+	return *h.s
 }
 
 // GET /items - List all items
-func (p *Provider) ListItems(c *gin.Context) {
-	s := p.GetItemService(nil)
+func (h *itemHandler) ListItems(c *gin.Context) {
+	s := h.GetItemService()
 	items, err := s.ListItems()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,8 +56,8 @@ func (p *Provider) ListItems(c *gin.Context) {
 }
 
 // GET /items/:id - Find an item
-func (p *Provider) FindItem(c *gin.Context) {
-	s := p.GetItemService(nil)
+func (h *itemHandler) FindItem(c *gin.Context) {
+	s := h.GetItemService()
 	item, found, err := s.FindItem(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
@@ -66,7 +71,7 @@ func (p *Provider) FindItem(c *gin.Context) {
 }
 
 // POST /items - Create a new item
-func (p *Provider) CreateItem(c *gin.Context) {
+func (h *itemHandler) CreateItem(c *gin.Context) {
 	// Validate input
 	var input models.CreateItemInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -75,7 +80,7 @@ func (p *Provider) CreateItem(c *gin.Context) {
 	}
 
 	// Create an item
-	s := p.GetItemService(nil)
+	s := h.GetItemService()
 	item, err := s.CreateItem(input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -85,7 +90,7 @@ func (p *Provider) CreateItem(c *gin.Context) {
 }
 
 // PATCH /items/:id - Update an item
-func (p *Provider) UpdateItem(c *gin.Context) {
+func (h *itemHandler) UpdateItem(c *gin.Context) {
 	// Validate input
 	var input models.UpdateItemInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -93,7 +98,7 @@ func (p *Provider) UpdateItem(c *gin.Context) {
 		return
 	}
 
-	s := p.GetItemService(nil)
+	s := h.GetItemService()
 	item, err := s.UpdateItem(c.Param("id"), input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -103,8 +108,8 @@ func (p *Provider) UpdateItem(c *gin.Context) {
 }
 
 // DELETE /items/:id - Delete an item
-func (p *Provider) DeleteItem(c *gin.Context) {
-	s := p.GetItemService(nil)
+func (h *itemHandler) DeleteItem(c *gin.Context) {
+	s := h.GetItemService()
 	if err := s.DeleteItem(c.Param("id")); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
 		return

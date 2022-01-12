@@ -20,19 +20,19 @@ func (m *ItemService) ListItems() ([]models.Item, error) {
 	return args.Get(0).([]models.Item), args.Error(1)
 }
 
-func (m *ItemService) FindItem(id string) (models.Item, bool, error) {
+func (m *ItemService) FindItem(id string) (*models.Item, bool, error) {
 	args := m.Called(id)
-	return args.Get(0).(models.Item), args.Get(1).(bool), args.Error(2)
+	return args.Get(0).(*models.Item), args.Get(1).(bool), args.Error(2)
 }
 
-func (m *ItemService) CreateItem(input models.CreateItemInput) (models.Item, error) {
+func (m *ItemService) CreateItem(input models.CreateItemInput) (*models.Item, error) {
 	args := m.Called(input)
-	return args.Get(0).(models.Item), args.Error(1)
+	return args.Get(0).(*models.Item), args.Error(1)
 }
 
-func (m *ItemService) UpdateItem(id string, input models.UpdateItemInput) (models.Item, error) {
+func (m *ItemService) UpdateItem(id string, input models.UpdateItemInput) (*models.Item, error) {
 	args := m.Called(id, input)
-	return args.Get(0).(models.Item), args.Error(1)
+	return args.Get(0).(*models.Item), args.Error(1)
 }
 
 func (m *ItemService) DeleteItem(id string) error {

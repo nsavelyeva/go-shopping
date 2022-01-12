@@ -1,7 +1,5 @@
 package routers
-// Unit tests [with setup/teardown] to verify every route, real database is used.
-// TODO: fix clearing DB in Test_ListItems_EmptyResult, till then -
-// a workaround: delete routers/items.db before running tests.
+// Unit tests [with setup/teardown] to verify every route, no real database is used.
 
 import (
 	"bytes"
@@ -11,7 +9,9 @@ import (
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/repository"
+	"github.com/nsavelyeva/go-shopping/services"
 	"github.com/nsavelyeva/go-shopping/test"
+	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
@@ -22,9 +22,11 @@ import (
 
 func setupSuite(tb testing.TB) func(tb testing.TB) {
 	log.Println("setup suite")
-
+	mocket.Catcher.Register()
+	mocket.Catcher.Logging = true
 	var r repository.ItemRepository
-	r = *repository.NewItemRepository()
+	r = *repository.NewItemRepository(mocket.DriverName, "connection_string")
+
 	test.R = r
 
 	// Return a function to teardown the test
@@ -34,121 +36,139 @@ func setupSuite(tb testing.TB) func(tb testing.TB) {
 	}
 }
 
-// Almost the same as the above, but this one is for single test instead of collection of tests
+/*
+// Almost the same as the above, but this one is for a single test instead of collection of tests
 func setupTest(tb testing.TB) func(tb testing.TB) {
 	log.Println("setup test")
 
 	return func(tb testing.TB) {
 		log.Println("teardown test")
-		test.R.ClearTable()
+		// test.R.ClearTable()
 	}
 }
+*/
 
 func Test_ListItems_EmptyResult(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
+
+	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithRowsNum(0)
+
 	req, w := setListItemsRouter(test.DB)
 
-	a := assert.New(t)
-	a.Equal(http.MethodGet, req.Method, "HTTP request method error")
-	a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
+	assert.Equal(t, http.MethodGet, req.Method, "HTTP request method error")
+	assert.Equal(t, http.StatusOK, w.Code, "HTTP request status code error")
 
 	body, err := ioutil.ReadAll(w.Body)
-	if err != nil {
-		a.Error(err)
-	}
+	assert.Nil(t, err)
 
-	actual := models.ItemsResponse{}
-	if err := json.Unmarshal(body, &actual); err != nil {
-		a.Error(err)
-	}
+	var actual models.ItemsResponse
+	err = json.Unmarshal(body, &actual)
+	assert.Nil(t, err)
 
-	a.Equal([]models.Item{}, actual.Data)
+	assert.Equal(t, []models.Item{}, actual.Data)
+}
+
+func Test_ListItems_NonEmptyResult(t *testing.T) {
+	teardownSuite := setupSuite(t)
+	defer teardownSuite(t)
+
+	var expected models.ItemsResponse
+	wantBody := `{"data":[{"name":"test-1","price":100.0,"sold":false},{"name":"test-2","price":100.991,"sold":true}]}`
+	err := json.Unmarshal([]byte(wantBody), &expected)
+	assert.Nil(t, err)
+	wantReply := []map[string]interface{}{
+		{"name":"test-1","price":100.0,"sold":false},
+		{"name":"test-2","price":100.991,"sold":true},
+	}
+	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
+
+	req, w := setListItemsRouter(test.DB)
+
+	assert.Equal(t, http.MethodGet, req.Method, "HTTP request method error")
+	assert.Equal(t, http.StatusOK, w.Code, "HTTP request status code error")
+
+	body, err := ioutil.ReadAll(w.Body)
+	assert.Nil(t, err)
+
+	var actual models.ItemsResponse
+	err = json.Unmarshal(body, &actual)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expected.Data, actual.Data)
 }
 
 func Test_FindItem_OK(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
-	a := assert.New(t)
 
-	item, err := insertTestItem(test.DB)
-	if err != nil {
-		a.Error(err)
-	}
+	var expected models.Item
+	wantBody := `{"name": "first", "price": 100, "sold": true}`
+	err := json.Unmarshal([]byte(wantBody), &expected)
+	assert.Nil(t, err)
+
+	wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
+	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 
 	req, w := setFindItemRouter(test.DB,"/items/1")
 
-	a.Equal(http.MethodGet, req.Method, "HTTP request method error")
-	a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
+	assert.Equal(t, http.MethodGet, req.Method, "HTTP request method error")
+	assert.Equal(t, http.StatusOK, w.Code, "HTTP request status code error")
 
 	body, err := ioutil.ReadAll(w.Body)
-	if err != nil {
-		a.Error(err)
-	}
+	assert.Nil(t, err)
 
 	actual := models.ItemResponse{}
-	if err := json.Unmarshal(body, &actual); err != nil {
-		a.Error(err)
-	}
-	actual.Data.Model = gorm.Model{}
-	expected := item
-	expected.Model = gorm.Model{}
-	a.Equal(expected.Name, actual.Data.Name)
-	a.Equal(expected.Price, actual.Data.Price)
-	a.NotNil(actual.Data.Sold)
-	a.NotNil(actual.Data.ID)
-	a.NotNil(actual.Data.CreatedAt)
-	a.NotNil(actual.Data.UpdatedAt)
-	a.Nil(actual.Data.DeletedAt)
+	err = json.Unmarshal(body, &actual)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expected, actual.Data)
+	assert.NotNil(t, actual.Data.CreatedAt)
+	assert.NotNil(t, actual.Data.UpdatedAt)
+	assert.Nil(t, actual.Data.DeletedAt)
 }
 
 func Test_CreateItem_OK(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
-	a := assert.New(t)
+
 	item := models.CreateItemInput{
 		Name: "test",
 		Price: 10.99,
 	}
 
 	reqBody, err := json.Marshal(item)
-	if err != nil {
-		a.Error(err)
-	}
+	assert.Nil(t, err)
 
 	req, w, err := setCreateItemRouter(test.DB, bytes.NewBuffer(reqBody))
-	if err != nil {
-		a.Error(err)
-	}
+	assert.Nil(t, err)
 
-	a.Equal(http.MethodPost, req.Method, "HTTP request method error")
-	a.Equal(http.StatusOK, w.Code, "HTTP request status code error")
+	assert.Equal(t, http.MethodPost, req.Method, "HTTP request method error")
+	assert.Equal(t, http.StatusOK, w.Code, "HTTP request status code error")
 
 	body, err := ioutil.ReadAll(w.Body)
-	if err != nil {
-		a.Error(err)
-	}
+	assert.Nil(t, err)
 
 	var actual models.ItemResponse
-	if err := json.Unmarshal(body, &actual); err != nil {
-		a.Error(err)
-	}
+	err = json.Unmarshal(body, &actual)
+	assert.Nil(t, err)
 
 	actual.Data.Model = gorm.Model{}
-	a.Equal(item.Name, actual.Data.Name)
-	a.Equal(item.Price, actual.Data.Price)
-	a.Equal(false, actual.Data.Sold)
-	a.NotNil(actual.Data.ID)
-	a.NotNil(actual.Data.CreatedAt)
-	a.NotNil(actual.Data.UpdatedAt)
-	a.Equal(actual.Data.CreatedAt, actual.Data.UpdatedAt)
-	a.Nil(actual.Data.DeletedAt)
+	assert.Equal(t, item.Name, actual.Data.Name)
+	assert.Equal(t, item.Price, actual.Data.Price)
+	assert.False(t, actual.Data.Sold)
+	assert.NotNil(t, actual.Data.ID)
+	assert.NotNil(t, actual.Data.CreatedAt)
+	assert.NotNil(t, actual.Data.UpdatedAt)
+	assert.Equal(t, actual.Data.CreatedAt, actual.Data.UpdatedAt)
+	assert.Nil(t, actual.Data.DeletedAt)
 }
 
 func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder) {
-	r := gin.New()
-	var h = handlers.NewProvider(nil, nil) // TODO: try to use mocks!
-	r.GET("/items", h.ListItems)
+	g := gin.New()
+	var s = services.NewItemService(test.R)
+	var h = handlers.NewItemHandler(*s)
+	g.GET("/items", h.ListItems)
 	req, err := http.NewRequest(http.MethodGet, "/items", nil)
 	if err != nil {
 		panic(err)
@@ -157,15 +177,16 @@ func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder)
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	g.ServeHTTP(w, req)
 	return req, w
 }
 
 func setCreateItemRouter(db *gorm.DB,
 	body *bytes.Buffer) (*http.Request, *httptest.ResponseRecorder, error) {
-	r := gin.New()
-	var h = handlers.NewProvider(nil, nil) // TODO: try to use mocks!
-	r.POST("/items", h.CreateItem)
+	g := gin.New()
+	var s = services.NewItemService(test.R)
+	var h = handlers.NewItemHandler(*s)
+	g.POST("/items", h.CreateItem)
 	req, err := http.NewRequest(http.MethodPost, "/items", body)
 	if err != nil {
 		return req, httptest.NewRecorder(), err
@@ -173,14 +194,15 @@ func setCreateItemRouter(db *gorm.DB,
 
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	g.ServeHTTP(w, req)
 	return req, w, nil
 }
 
 func setFindItemRouter(db *gorm.DB, url string) (*http.Request, *httptest.ResponseRecorder) {
-	r := gin.New()
-	var h = handlers.NewProvider(nil, nil) // TODO: try to use mocks!
-	r.GET("/items/:id", h.FindItem)
+	g := gin.New()
+	var s = services.NewItemService(test.R)
+	var h = handlers.NewItemHandler(*s)
+	g.GET("/items/:id", h.FindItem)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -189,19 +211,6 @@ func setFindItemRouter(db *gorm.DB, url string) (*http.Request, *httptest.Respon
 
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	g.ServeHTTP(w, req)
 	return req, w
-}
-
-func insertTestItem(db *gorm.DB) (*models.Item, error){
-	input := models.CreateItemInput{
-		Name: "test item",
-		Price: 100.0,
-	}
-	item, err := test.R.CreateItem(&input)
-	if err != nil {
-		return &models.Item{}, err
-	}
-
-	return item, nil
 }
