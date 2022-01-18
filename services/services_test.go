@@ -151,25 +151,25 @@ func Test_itemService_GetItemRepository(t *testing.T) {
 }
 */
 func Test_itemService_ListItems(t *testing.T) {
+	sold := true
 	tests := []struct {
 		name    string
 		want    []models.Item
 		wantErr bool
 		err     error
 	}{
-		{"success", []models.Item{models.Item{Sold: true}}, false, nil},
+		{"success", []models.Item{models.Item{Sold: &sold}}, false, nil},
 		{"error", []models.Item{}, true, errors.New("some error")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-
 			repo := test.NewItemRepository(mocket.DriverName, "connection_string")
-			s := *NewItemService(repo)
 			repo.On("ListItems", mock.Anything).Return(tt.want, tt.err)
+			s := *NewItemService(repo)
+
 			got, err := s.ListItems()
 
-			a.Equal(tt.want, got)
+			assert.Equal(t, tt.want, got)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ListItems() error = %v, wantErr %v", err, tt.wantErr)

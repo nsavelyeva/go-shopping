@@ -7,7 +7,6 @@ import (
 
 
 func main() {
-	//database.Setup()
 	router := routers.Setup()
 
 	endless.ListenAndServe(":8080", router)   // instead of router.Run()

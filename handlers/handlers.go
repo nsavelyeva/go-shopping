@@ -60,14 +60,14 @@ func (h *itemHandler) FindItem(c *gin.Context) {
 	s := h.GetItemService()
 	item, found, err := s.FindItem(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "item not found"})
 		return
 	}
 	if found {
 		c.JSON(http.StatusOK, gin.H{"data": item})
 		return
 	}
-	c.JSON(http.StatusNoContent, gin.H{"data": nil})
+	c.JSON(http.StatusNotFound, gin.H{"data": nil})
 }
 
 // POST /items - Create a new item
@@ -111,7 +111,7 @@ func (h *itemHandler) UpdateItem(c *gin.Context) {
 func (h *itemHandler) DeleteItem(c *gin.Context) {
 	s := h.GetItemService()
 	if err := s.DeleteItem(c.Param("id")); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Item not found!"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "item not found"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"deleted": true})

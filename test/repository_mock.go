@@ -1,7 +1,6 @@
 package test
 
 import (
-    "github.com/jinzhu/gorm"
     "github.com/nsavelyeva/go-shopping/models"
     "github.com/stretchr/testify/mock"
 )
@@ -38,14 +37,4 @@ func (m *ItemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*
 func (m *ItemRepository) DeleteItem(id string) error {
     args := m.Called(id)
     return args.Error(0)
-}
-
-func (m *ItemRepository) GetDB() *gorm.DB {
-    args := m.Called()
-    return args.Get(0).(*gorm.DB)
-}
-
-func (m *ItemRepository) ClearTable()  *gorm.DB {
-    args := m.Called()
-    return args.Get(0).(*gorm.DB)
 }

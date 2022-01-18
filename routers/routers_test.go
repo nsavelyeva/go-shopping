@@ -1,18 +1,19 @@
 package routers
 // Unit tests [with setup/teardown] to verify every route, no real database is used.
+// TODO: increase test coverage
 
 import (
 	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/models"
-	"github.com/nsavelyeva/go-shopping/repository"
 	"github.com/nsavelyeva/go-shopping/services"
 	"github.com/nsavelyeva/go-shopping/test"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,15 +25,15 @@ func setupSuite(tb testing.TB) func(tb testing.TB) {
 	log.Println("setup suite")
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
-	var r repository.ItemRepository
-	r = *repository.NewItemRepository(mocket.DriverName, "connection_string")
+	//var r repository.ItemRepository
+	r := test.NewItemRepository(mocket.DriverName, "connection_string")
 
 	test.R = r
 
 	// Return a function to teardown the test
 	return func(tb testing.TB) {
 		log.Println("teardown suite")
-		test.R.GetDB().Close()
+		//test.R.GetDB().Close()
 	}
 }
 
@@ -52,6 +53,8 @@ func Test_ListItems_EmptyResult(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
 
+	wantData := []models.Item{}
+	test.R.On("ListItems", mock.Anything).Return(wantData, nil)
 	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithRowsNum(0)
 
 	req, w := setListItemsRouter(test.DB)
@@ -66,7 +69,7 @@ func Test_ListItems_EmptyResult(t *testing.T) {
 	err = json.Unmarshal(body, &actual)
 	assert.Nil(t, err)
 
-	assert.Equal(t, []models.Item{}, actual.Data)
+	assert.Equal(t, wantData, actual.Data)
 }
 
 func Test_ListItems_NonEmptyResult(t *testing.T) {
@@ -77,6 +80,7 @@ func Test_ListItems_NonEmptyResult(t *testing.T) {
 	wantBody := `{"data":[{"name":"test-1","price":100.0,"sold":false},{"name":"test-2","price":100.991,"sold":true}]}`
 	err := json.Unmarshal([]byte(wantBody), &expected)
 	assert.Nil(t, err)
+	test.R.On("ListItems", mock.Anything).Return(expected.Data, nil)
 	wantReply := []map[string]interface{}{
 		{"name":"test-1","price":100.0,"sold":false},
 		{"name":"test-2","price":100.991,"sold":true},
@@ -107,6 +111,7 @@ func Test_FindItem_OK(t *testing.T) {
 	err := json.Unmarshal([]byte(wantBody), &expected)
 	assert.Nil(t, err)
 
+	test.R.On("FindItem", mock.Anything).Return(&expected, true, nil)
 	wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
 	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 
@@ -118,25 +123,31 @@ func Test_FindItem_OK(t *testing.T) {
 	body, err := ioutil.ReadAll(w.Body)
 	assert.Nil(t, err)
 
-	actual := models.ItemResponse{}
+	var actual models.ItemResponse
 	err = json.Unmarshal(body, &actual)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, actual.Data)
 	assert.NotNil(t, actual.Data.CreatedAt)
 	assert.NotNil(t, actual.Data.UpdatedAt)
-	assert.Nil(t, actual.Data.DeletedAt)
+	assert.False(t, actual.Data.DeletedAt.Valid)
 }
 
 func Test_CreateItem_OK(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
-
+	name := "test"
+	price := float32(10.99)
 	item := models.CreateItemInput{
-		Name: "test",
-		Price: 10.99,
+		Name: name,
+		Price: price,
 	}
+	var expected models.Item
+	wantBody := `{"name": "test", "price": 10.99, "sold": true}`
+	err := json.Unmarshal([]byte(wantBody), &expected)
+	assert.Nil(t, err)
 
+	test.R.On("CreateItem", mock.Anything).Return(&expected, nil)
 	reqBody, err := json.Marshal(item)
 	assert.Nil(t, err)
 
@@ -154,14 +165,14 @@ func Test_CreateItem_OK(t *testing.T) {
 	assert.Nil(t, err)
 
 	actual.Data.Model = gorm.Model{}
-	assert.Equal(t, item.Name, actual.Data.Name)
-	assert.Equal(t, item.Price, actual.Data.Price)
-	assert.False(t, actual.Data.Sold)
+	assert.Equal(t, expected, actual.Data)
+	assert.Equal(t, expected.Price, actual.Data.Price)
+	assert.True(t, *expected.Sold)
 	assert.NotNil(t, actual.Data.ID)
 	assert.NotNil(t, actual.Data.CreatedAt)
 	assert.NotNil(t, actual.Data.UpdatedAt)
 	assert.Equal(t, actual.Data.CreatedAt, actual.Data.UpdatedAt)
-	assert.Nil(t, actual.Data.DeletedAt)
+	assert.False(t, actual.Data.DeletedAt.Valid)
 }
 
 func setListItemsRouter(db *gorm.DB) (*http.Request, *httptest.ResponseRecorder) {

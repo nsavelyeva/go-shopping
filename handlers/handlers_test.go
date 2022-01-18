@@ -1,6 +1,7 @@
 package handlers
 // Unit tests to verify handlers functions without involving routers layer, repository and service layers are mock.
 // See also https://newbedev.com/go-gin-unit-test-code-example
+// TODO: increase test coverage
 
 import (
 	"errors"
@@ -141,6 +142,7 @@ func TestHandler_ListItems(t *testing.T) {
 			c, _ := gin.CreateTestContext(w)
 
 			repo := test.NewItemRepository(mocket.DriverName, "connection_string")
+			repo.On("ListItems", mock.Anything).Return(tt.data, tt.err)
 			serv := test.NewItemService(repo)
 			serv.On("SetItemRepository", mock.Anything).Return()
 			serv.On("ListItems", mock.Anything).Return(tt.data, tt.err)

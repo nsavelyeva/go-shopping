@@ -1,12 +1,12 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 type Item struct {
 	gorm.Model
-	Name    string  `json:"name"`
-	Price   float32 `json:"price"`
-	Sold    bool    `json:"sold"`
+	Name    *string  `json:"name"`
+	Price   *float32 `json:"price"`
+	Sold    *bool    `json:"sold"`
 }
 
 type ItemResponse struct {

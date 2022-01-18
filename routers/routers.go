@@ -1,15 +1,18 @@
 package routers
+// TODO: move usage of gorm
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/repository"
 	"github.com/nsavelyeva/go-shopping/services"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func Setup() *gin.Engine {
 	router := gin.Default()
-	var r = *repository.NewItemRepository("sqlite3", "items.db")
+	var r = *repository.NewItemRepository(sqlite.Open("items.db"), &gorm.Config{})
     var s = services.NewItemService(r)
 	var h = handlers.NewItemHandler(*s)
 	// Routes

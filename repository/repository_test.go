@@ -4,7 +4,7 @@ package repository
 // https://github.com/Selvatico/go-mocket/blob/master/DOCUMENTATION.md
 //
 // In tests, prepare expected replies as follows:
-// wantReply := []map[string]interface{}{{"ID": 1, "name": "first", "price": 100, "sold": true}}
+// wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
 // mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 // Important: Use database files here (snake_case) and not struct variables (CamelCase)
 // eg: first_name, last_name, date_of_birth NOT FirstName, LastName or DateOfBirth
@@ -13,43 +13,50 @@ import (
 	"errors"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"testing"
 )
 
-func SetupRepository() *ItemRepository {
+func SetupMockRepository() *ItemRepository {
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
-	r := *NewItemRepository(mocket.DriverName, "connection_string")
+	dialect := mysql.New(mysql.Config{
+		DSN:                             "mockdb",
+		DriverName:                      mocket.DriverName,
+		SkipInitializeWithVersion: true,
+	})
 
+	r := *NewItemRepository(dialect, new(gorm.Config))
 	return &r
 }
 
 func Test_repository_FindItem_Found(t *testing.T) {
-	wantReply := []map[string]interface{}{{"ID": 1, "name": "first", "price": 100, "sold": true}}
-	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
+	wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
+	q := "SELECT * FROM `items` WHERE `items`.`id` = 1 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithReply(wantReply)
 
-	r := *SetupRepository()
+	r := *SetupMockRepository()
 	item, found, err := r.FindItem("1")
 
-	require.NoError(t, err)
+	assert.Nil(t, err)
 	assert.True(t, found)
-	assert.Equal(t, "first", item.Name)
-	assert.Equal(t, float32(100), item.Price)
-	assert.True(t, item.Sold)
+	assert.Equal(t, "first", *item.Name)
+	assert.Equal(t, float32(100), *item.Price)
+	assert.True(t, *item.Sold)
 
-	// Now assert the auto-generated fields are available:
 	assert.NotNil(t, item.ID)
 	assert.NotNil(t, item.CreatedAt)
 	assert.NotNil(t, item.UpdatedAt)
 	assert.Equal(t, item.CreatedAt, item.UpdatedAt)
-	assert.Nil(t, item.DeletedAt)
+	assert.False(t, item.DeletedAt.Valid)
 }
 
 func Test_repository_FindItem_NotFound(t *testing.T) {
-	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithRowsNum(0)
+	q := "SELECT * FROM `items` WHERE `items`.`id` = 1 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
 
-	r := *SetupRepository()
+	r := *SetupMockRepository()
 	item, found, err := r.FindItem("1")
 
 	assert.False(t, found)
@@ -57,12 +64,27 @@ func Test_repository_FindItem_NotFound(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-
-func Test_repository_FindItem_Error(t *testing.T) {
+func Test_repository_FindItem_ErrorSQL(t *testing.T) {
 	wantErr := errors.New("some SQL error")
-	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithError(wantErr)
+	q := "SELECT * FROM `items` WHERE `items`.`id` = 1 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithError(wantErr)
 
-	r := *SetupRepository()
+	r := *SetupMockRepository()
+	item, found, err := r.FindItem("1")
+
+	assert.False(t, found)
+	assert.Nil(t, item)
+	assert.Equal(t, wantErr, err)
+}
+
+func Test_repository_FindItem_ErrorGo(t *testing.T) {
+	wantErr := errors.New("broken item found")
+	wantReply := []map[string]interface{}{{"name": "broken", "foo": "bar", "baz": true}}
+
+	q := "SELECT * FROM `items` WHERE `items`.`id` = 1 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithReply(wantReply)
+
+	r := *SetupMockRepository()
 	item, found, err := r.FindItem("1")
 
 	assert.False(t, found)
