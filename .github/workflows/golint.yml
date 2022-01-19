@@ -26,7 +26,7 @@ jobs:
       - name: Comment Lint Result
         uses: NejcZdovc/comment-pr@v1
         with:
-          message: "Lint result: ${{steps.golint.outputs.golint}}"
+          message: "Output of golint: ${{ steps.golint.outputs.golint }}"
           identifier: "GOLINT_RESULT"
           github_token: ${{secrets.GITHUB_TOKEN}}
 
