@@ -32,10 +32,10 @@ jobs:
           totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
           echo "Current test coverage : $totalCoverage %"
           if (( $(echo "$totalCoverage $TESTCOVERAGE_THRESHOLD" | awk '{print ($1 > $2)}') )); then
-              echo "::set-output name=gate::$(echo '**PASSED**\n' '> actual coverage `'$totalCoverage'%`' '>=' '`'$TESTCOVERAGE_THRESHOLD'%`' '(threshold)')"
+              echo "::set-output name=gate::$(echo '**PASSED**' '> actual coverage `'$totalCoverage'%`' '>=' '`'$TESTCOVERAGE_THRESHOLD'%`' '(threshold)')"
           else
               echo "Current test coverage is below threshold. Please add more unit tests or adjust threshold to a lower value."
-              echo "::set-output name=gate::$(echo '**FAILED**\n' '> actual coverage `'$totalCoverage'%`' '<=' '`'$TESTCOVERAGE_THRESHOLD'%`' '(threshold)')"
+              echo "::set-output name=gate::$(echo '**FAILED**' '> actual coverage `'$totalCoverage'%`' '<=' '`'$TESTCOVERAGE_THRESHOLD'%`' '(threshold)')"
               exit 1
           fi
 
@@ -43,6 +43,6 @@ jobs:
         if: ${{ success() || failure() }}
         uses: NejcZdovc/comment-pr@v1
         with:
-          message: "## Quality Gate Status: ${{ steps.gate.outputs.gate }}"
+          message: "## Quality Gate Status: \n\n ${{ steps.gate.outputs.gate }}"
           identifier: "QUALITY_GATE"
           github_token: ${{ secrets.GITHUB_TOKEN }}
