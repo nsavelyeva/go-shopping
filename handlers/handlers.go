@@ -12,8 +12,8 @@ import (
 	"github.com/nsavelyeva/go-shopping/services"
 )
 
-// ItemHandler is an interface for itemHandler struct
-type ItemHandler interface {
+
+type ItemHandler interface {// ItemHandler is an interface for itemHandler struct
 	ListItems(c *gin.Context)
 	FindItem(c *gin.Context)
 	CreateItem(c *gin.Context)
