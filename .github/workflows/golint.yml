@@ -1,8 +1,8 @@
 name: Run golint
 on:
-  pull_request:
-    branches:
-      - master
+#  pull_request:
+#    branches:
+#      - master
 
 jobs:
   test:
@@ -21,14 +21,8 @@ jobs:
 
       - name: Lint
         id: golint
-        run: echo "::set-output name=golint::$(golint -set_exit_status ./... && echo 'OK')"
-
-      - name: Comment Lint Result
-        uses: NejcZdovc/comment-pr@v1
-        with:
-          message: "Golint checks: ${{ steps.golint.outputs.golint }}"
-          identifier: "GOLINT_RESULT"
-          github_token: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          golint -set_exit_status ./...
 
       - name: Vet
         run: |

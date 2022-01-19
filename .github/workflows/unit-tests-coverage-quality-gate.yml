@@ -23,17 +23,26 @@ jobs:
           sudo go tool cover -func coverage.out
 
       - name: Quality Gate - Test coverage shall be above threshold
+        id: gate
         env:
-          TESTCOVERAGE_THRESHOLD: 0
+          TESTCOVERAGE_THRESHOLD: 30
         run: |
           echo "Quality Gate: checking test coverage is above threshold ..."
           echo "Threshold             : $TESTCOVERAGE_THRESHOLD %"
           totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
           echo "Current test coverage : $totalCoverage %"
           if (( $(echo "$totalCoverage $TESTCOVERAGE_THRESHOLD" | awk '{print ($1 > $2)}') )); then
-              echo "OK"
+              echo "::set-output name=gate::$(echo PASSED $totalCoverage '>=' $TESTCOVERAGE_THRESHOLD '(threshold)')"
           else
               echo "Current test coverage is below threshold. Please add more unit tests or adjust threshold to a lower value."
-              echo "Failed"
+              echo "::set-output name=gate::$(echo FAILED $totalCoverage '<=' $TESTCOVERAGE_THRESHOLD '(threshold)')"
               exit 1
           fi
+
+      - name: Comment Lint Result
+        if: ${{ success() || failure() }}
+        uses: NejcZdovc/comment-pr@v1
+        with:
+          message: "Quality Gate: ${{ steps.gate.outputs.gate }}"
+          identifier: "QUALITY_GATE"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
