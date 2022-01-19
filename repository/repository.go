@@ -89,9 +89,9 @@ func (r *itemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*
 		return nil, errors.New("item not found")
 	}
 	data := models.Item{
-		Name: &input.Name,
+		Name:  &input.Name,
 		Price: &input.Price,
-		Sold: &input.Sold,
+		Sold:  &input.Sold,
 	}
 	if err := r.db.Model(&item).Updates(data).Error; err != nil {
 		return nil, err

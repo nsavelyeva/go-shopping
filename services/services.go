@@ -21,7 +21,7 @@ type ItemService interface {
 }
 
 type itemService struct {
-    r *repository.ItemRepository
+	r *repository.ItemRepository
 }
 
 // NewItemService is a constructor for ItemService

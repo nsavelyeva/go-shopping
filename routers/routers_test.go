@@ -27,7 +27,7 @@ func setupSuite(tb testing.TB) func(tb testing.TB) {
 	log.Println("setup suite")
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
-	//var r repository.ItemRepository
+
 	r := test.NewItemRepository(mocket.DriverName, "connection_string")
 
 	test.R = r
@@ -117,7 +117,7 @@ func Test_FindItem_OK(t *testing.T) {
 	wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
 	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 
-	req, w := setFindItemRouter(test.DB,"/items/1")
+	req, w := setFindItemRouter(test.DB, "/items/1")
 
 	assert.Equal(t, http.MethodGet, req.Method, "HTTP request method error")
 	assert.Equal(t, http.StatusOK, w.Code, "HTTP request status code error")

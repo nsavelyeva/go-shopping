@@ -8,5 +8,8 @@ import (
 func main() {
 	router := routers.Setup()
 
-	endless.ListenAndServe(":8080", router) // instead of router.Run()
+	err := endless.ListenAndServe(":8080", router) // instead of router.Run()
+	if err != nil {
+		return
+	}
 }

@@ -5,9 +5,9 @@ package handlers
 // TODO: increase test coverage
 
 import (
+	"errors"
 	"net/http/httptest"
 	"testing"
-	"errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
