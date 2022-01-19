@@ -20,8 +20,15 @@ jobs:
           go get -t .
 
       - name: Lint
-        run: |
-          golint -set_exit_status ./...
+        id: lint-result
+        run: echo "::set-output name=lint_result::$(golint -set_exit_status ./...)"
+
+      - name: Comment Lint Result
+        uses: NejcZdovc/comment-pr@v1
+        with:
+          message: "Lint result: `${{steps.lint-result.outputs.result}}`"
+          identifier: "GOLINT_RESULT"
+          github_token: ${{secrets.GITHUB_TOKEN}}
 
       - name: Vet
         run: |
