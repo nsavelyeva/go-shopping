@@ -8,7 +8,7 @@ import (
 	"errors"
 	"reflect"
 	"testing"
-	"errors"
+
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"
 	mocket "github.com/selvatico/go-mocket"
