@@ -1,18 +1,20 @@
 package handlers
+
 // Unit tests to verify handlers functions without involving routers layer, repository and service layers are mock.
 // See also https://newbedev.com/go-gin-unit-test-code-example
 // TODO: increase test coverage
 
 import (
 	"errors"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/http/httptest"
-	"testing"
 )
 
 /*
@@ -126,11 +128,11 @@ func TestHandler_GetItemService(t *testing.T) {
 */
 func TestHandler_ListItems(t *testing.T) {
 	tests := []struct {
-		name       string
-		data       []models.Item
-		err        error
-		wantCode   int
-		wantBody   string
+		name     string
+		data     []models.Item
+		err      error
+		wantCode int
+		wantBody string
 	}{
 		{"success", []models.Item{}, nil, 200, `{"data":[]}`},
 		{"error", nil, errors.New("some error"), 400, `{"error":"some error"}`},
@@ -155,6 +157,7 @@ func TestHandler_ListItems(t *testing.T) {
 		})
 	}
 }
+
 /*
 func TestHandler_SetItemService(t *testing.T) {
 	type fields struct {

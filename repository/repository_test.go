@@ -1,4 +1,5 @@
 package repository
+
 // Unit tests to verify SQL queries, no real DB is used thanks to go-mocket.
 // See also https://medium.com/@rosaniline/unit-testing-gorm-with-go-sqlmock-in-go-93cbce1f6b5b
 // https://github.com/Selvatico/go-mocket/blob/master/DOCUMENTATION.md
@@ -11,19 +12,20 @@ package repository
 
 import (
 	"errors"
+	"testing"
+
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func SetupMockRepository() *ItemRepository {
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
 	dialect := mysql.New(mysql.Config{
-		DSN:                             "mockdb",
-		DriverName:                      mocket.DriverName,
+		DSN:                       "mockdb",
+		DriverName:                mocket.DriverName,
 		SkipInitializeWithVersion: true,
 	})
 

@@ -1,10 +1,17 @@
 package routers
+
 // Unit tests [with setup/teardown] to verify every route, no real database is used.
 // TODO: increase test coverage
 
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/models"
@@ -14,18 +21,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func setupSuite(tb testing.TB) func(tb testing.TB) {
 	log.Println("setup suite")
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
-	//var r repository.ItemRepository
+
 	r := test.NewItemRepository(mocket.DriverName, "connection_string")
 
 	test.R = r
@@ -82,8 +84,8 @@ func Test_ListItems_NonEmptyResult(t *testing.T) {
 	assert.Nil(t, err)
 	test.R.On("ListItems", mock.Anything).Return(expected.Data, nil)
 	wantReply := []map[string]interface{}{
-		{"name":"test-1","price":100.0,"sold":false},
-		{"name":"test-2","price":100.991,"sold":true},
+		{"name": "test-1", "price": 100.0, "sold": false},
+		{"name": "test-2", "price": 100.991, "sold": true},
 	}
 	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 
@@ -115,7 +117,7 @@ func Test_FindItem_OK(t *testing.T) {
 	wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
 	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 
-	req, w := setFindItemRouter(test.DB,"/items/1")
+	req, w := setFindItemRouter(test.DB, "/items/1")
 
 	assert.Equal(t, http.MethodGet, req.Method, "HTTP request method error")
 	assert.Equal(t, http.StatusOK, w.Code, "HTTP request status code error")
@@ -139,7 +141,7 @@ func Test_CreateItem_OK(t *testing.T) {
 	name := "test"
 	price := float32(10.99)
 	item := models.CreateItemInput{
-		Name: name,
+		Name:  name,
 		Price: price,
 	}
 	var expected models.Item

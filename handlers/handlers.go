@@ -1,15 +1,18 @@
 package handlers
+
 // The handler layer is responsible for parsing a request,
 // calling out the relevant service and then returning a response to the caller.
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/services"
-	"log"
-	"net/http"
 )
 
+// ItemHandler is an interface for itemHandler struct
 type ItemHandler interface {
 	ListItems(c *gin.Context)
 	FindItem(c *gin.Context)
@@ -22,6 +25,7 @@ type itemHandler struct {
 	s *services.ItemService
 }
 
+// NewItemHandler is a constructor for ItemHandler
 func NewItemHandler(s services.ItemService) ItemHandler {
 	if s == nil {
 		log.Fatal("Failed to initialize item handler, service is nil")

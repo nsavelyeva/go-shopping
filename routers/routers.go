@@ -1,4 +1,5 @@
 package routers
+
 // TODO: move usage of gorm
 
 import (
@@ -10,10 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// Setup is a function to initiate gin and define routes, it is used in test
 func Setup() *gin.Engine {
 	router := gin.Default()
 	var r = *repository.NewItemRepository(sqlite.Open("items.db"), &gorm.Config{})
-    var s = services.NewItemService(r)
+	var s = services.NewItemService(r)
 	var h = handlers.NewItemHandler(*s)
 	// Routes
 	router.GET("/items", h.ListItems)
