@@ -25,8 +25,8 @@ type itemHandler struct {
 	s *services.ItemService
 }
 
-// NewItemHandler is a constructor for ItemHandler
-func NewItemHandler(s services.ItemService) ItemHandler {
+
+func NewItemHandler(s services.ItemService) ItemHandler {// NewItemHandler is a constructor for ItemHandler
 	if s == nil {
 		log.Fatal("Failed to initialize item handler, service is nil")
 		return nil
