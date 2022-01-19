@@ -13,21 +13,20 @@ jobs:
         with:
           go-version: '^1.16.0'
 
-#      - name: Setup GO environment
-#        run: |
-#          go mod download
-#          go get -u golang.org/x/lint/golint
-#          go get -t .
+      - name: Setup GO environment
+        run: |
+          go mod download
+          go get -u golang.org/x/lint/golint
+          go get -t .
 
       - name: Lint
         id: golint
-        run: echo "::set-output name=golint::$(golint -set_exit_status ./...)"
+        run: echo "::set-output name=golint::$(golint -set_exit_status ./... && echo 'OK')"
 
       - name: Comment Lint Result
-        if: ${{ steps.golint.outputs.golint != '' }}
         uses: NejcZdovc/comment-pr@v1
         with:
-          message: "Output of golint: ${{ steps.golint.outputs.golint }}"
+          message: "Golint checks: ${{ steps.golint.outputs.golint }}"
           identifier: "GOLINT_RESULT"
           github_token: ${{secrets.GITHUB_TOKEN}}
 
