@@ -21,7 +21,7 @@ jobs:
 
       - name: Lint
         id: lint-result
-        run: echo "::set-output name=lint_result::$(golint -set_exit_status ./...)"
+        run: echo "::set-output name=lint-result::$(golint -set_exit_status ./...)"
 
       - name: Comment Lint Result
         uses: NejcZdovc/comment-pr@v1
