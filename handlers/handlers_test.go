@@ -7,8 +7,8 @@ package handlers
 import (
 	"net/http/httptest"
 	"testing"
-
 	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"

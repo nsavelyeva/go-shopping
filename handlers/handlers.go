@@ -12,6 +12,7 @@ import (
 	"github.com/nsavelyeva/go-shopping/services"
 )
 
+// ItemHandler is an interface for itemHandler struct
 type ItemHandler interface {
 	ListItems(c *gin.Context)
 	FindItem(c *gin.Context)
@@ -24,6 +25,7 @@ type itemHandler struct {
 	s *services.ItemService
 }
 
+// NewItemHandler is a constructor for ItemHandler
 func NewItemHandler(s services.ItemService) ItemHandler {
 	if s == nil {
 		log.Fatal("Failed to initialize item handler, service is nil")

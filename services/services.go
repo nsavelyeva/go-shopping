@@ -6,23 +6,25 @@ package services
 
 import (
 	"log"
+
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/repository"
 )
 
+// ItemService is an interface for itemService struct
 type ItemService interface {
 	ListItems() ([]models.Item, error)
 	FindItem(id string) (*models.Item, bool, error)
 	CreateItem(input models.CreateItemInput) (*models.Item, error)
 	UpdateItem(id string, input models.UpdateItemInput) (*models.Item, error)
 	DeleteItem(id string) error
-	SetItemRepository(r repository.ItemRepository)
 }
 
 type itemService struct {
     r *repository.ItemRepository
 }
 
+// NewItemService is a constructor for ItemService
 func NewItemService(r repository.ItemRepository) *ItemService {
 	if r == nil {
 		log.Fatal("Failed to initialize item service, repository is nil")
@@ -30,10 +32,6 @@ func NewItemService(r repository.ItemRepository) *ItemService {
 	}
 	var s ItemService = &itemService{r: &r}
 	return &s
-}
-
-func (s *itemService) SetItemRepository(r repository.ItemRepository) {
-	s.r = &r
 }
 
 func (s *itemService) GetItemRepository() repository.ItemRepository {

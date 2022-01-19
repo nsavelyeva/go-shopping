@@ -12,19 +12,20 @@ package repository
 
 import (
 	"errors"
+	"testing"
+
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func SetupMockRepository() *ItemRepository {
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
 	dialect := mysql.New(mysql.Config{
-		DSN:                             "mockdb",
-		DriverName:                      mocket.DriverName,
+		DSN:                       "mockdb",
+		DriverName:                mocket.DriverName,
 		SkipInitializeWithVersion: true,
 	})
 

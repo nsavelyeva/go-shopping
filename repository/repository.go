@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ItemRepository is an interface for the struct itemRepository
 type ItemRepository interface {
 	ListItems() ([]models.Item, error)
 	FindItem(id string) (*models.Item, bool, error)
@@ -23,13 +24,14 @@ type itemRepository struct {
 	db *gorm.DB
 }
 
-func ConnectDB(dialector gorm.Dialector, config *gorm.Config) (*gorm.DB, error) {
+func connectDB(dialector gorm.Dialector, config *gorm.Config) (*gorm.DB, error) {
 	db, err := gorm.Open(dialector, config)
 	return db, err
 }
 
+// NewItemRepository is a constructor for ItemRepository
 func NewItemRepository(dialector gorm.Dialector, config *gorm.Config) *ItemRepository {
-	db, err := ConnectDB(dialector, config)
+	db, err := connectDB(dialector, config)
 	if err != nil {
 		log.Fatalf("Failed to connect to the database due to error: %s", err)
 		return nil
@@ -40,7 +42,7 @@ func NewItemRepository(dialector gorm.Dialector, config *gorm.Config) *ItemRepos
 }
 
 func (r *itemRepository) isItemComplete(item *models.Item) bool {
-	return item.Name != nil && item.Price != nil && item.Sold != nil  // i.e. all non-GORM fields are not nil
+	return item.Name != nil && item.Price != nil && item.Sold != nil // i.e. all non-GORM fields are not nil
 }
 
 func (r *itemRepository) ListItems() ([]models.Item, error) {
