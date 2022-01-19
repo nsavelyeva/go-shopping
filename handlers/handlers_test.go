@@ -128,11 +128,11 @@ func TestHandler_GetItemService(t *testing.T) {
 */
 func TestHandler_ListItems(t *testing.T) {
 	tests := []struct {
-		name       string
-		data       []models.Item
-		err        error
-		wantCode   int
-		wantBody   string
+		name     string
+		data     []models.Item
+		err      error
+		wantCode int
+		wantBody string
 	}{
 		{"success", []models.Item{}, nil, 200, `{"data":[]}`},
 		{"error", nil, errors.New("some error"), 400, `{"error":"some error"}`},
