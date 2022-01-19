@@ -1,4 +1,5 @@
 package routers
+
 // TODO: move usage of gorm
 
 import (

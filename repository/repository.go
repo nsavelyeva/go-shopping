@@ -1,12 +1,14 @@
 package repository
+
 // The repository layer is responsible for connecting directly to the database to retrieve and/or modify records.
 
 import (
 	"errors"
-	"github.com/nsavelyeva/go-shopping/models"
-	"gorm.io/gorm"
 	"log"
 	"strconv"
+
+	"github.com/nsavelyeva/go-shopping/models"
+	"gorm.io/gorm"
 )
 
 type ItemRepository interface {
@@ -37,7 +39,7 @@ func NewItemRepository(dialector gorm.Dialector, config *gorm.Config) *ItemRepos
 	return &r
 }
 
-func (r *itemRepository) isComplete(item *models.Item) bool {
+func (r *itemRepository) isItemComplete(item *models.Item) bool {
 	return item.Name != nil && item.Price != nil && item.Sold != nil  // i.e. all non-GORM fields are not nil
 }
 
@@ -59,7 +61,7 @@ func (r *itemRepository) FindItem(id string) (*models.Item, bool, error) {
 		}
 		return nil, false, err
 	}
-	if !r.isComplete(&item) {
+	if !r.isItemComplete(&item) {
 		return nil, false, errors.New("broken item found")
 	}
 
@@ -69,9 +71,9 @@ func (r *itemRepository) FindItem(id string) (*models.Item, bool, error) {
 func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item, error) {
 	f := false
 	item := models.Item{
-		Name: &input.Name,
+		Name:  &input.Name,
 		Price: &input.Price,
-		Sold: &f,
+		Sold:  &f,
 	}
 	if err := r.db.Save(&item).Error; err != nil {
 		return nil, err

@@ -1,18 +1,20 @@
 package services
+
 // Unit test with mock repository layer.
 // Indeed, DB is not required: SQLite DB file services/items.db is not created when running unit tests.
 // TODO: increase test coverage
 
 import (
 	"errors"
+	"reflect"
+	"testing"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"reflect"
-	"testing"
 )
+
 /*
 func TestNewItemService(t *testing.T) {
 	tests := []struct {

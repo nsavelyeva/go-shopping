@@ -1,4 +1,5 @@
 package repository
+
 // Unit tests to verify SQL queries, no real DB is used thanks to go-mocket.
 // See also https://medium.com/@rosaniline/unit-testing-gorm-with-go-sqlmock-in-go-93cbce1f6b5b
 // https://github.com/Selvatico/go-mocket/blob/master/DOCUMENTATION.md

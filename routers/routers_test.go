@@ -1,10 +1,16 @@
 package routers
+
 // Unit tests [with setup/teardown] to verify every route, no real database is used.
 // TODO: increase test coverage
 
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/handlers"
 	"github.com/nsavelyeva/go-shopping/models"
@@ -14,11 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func setupSuite(tb testing.TB) func(tb testing.TB) {
@@ -82,8 +83,8 @@ func Test_ListItems_NonEmptyResult(t *testing.T) {
 	assert.Nil(t, err)
 	test.R.On("ListItems", mock.Anything).Return(expected.Data, nil)
 	wantReply := []map[string]interface{}{
-		{"name":"test-1","price":100.0,"sold":false},
-		{"name":"test-2","price":100.991,"sold":true},
+		{"name": "test-1", "price": 100.0, "sold": false},
+		{"name": "test-2", "price": 100.991, "sold": true},
 	}
 	mocket.Catcher.Reset().NewMock().WithQuery(`SELECT items.*`).WithReply(wantReply)
 
@@ -139,7 +140,7 @@ func Test_CreateItem_OK(t *testing.T) {
 	name := "test"
 	price := float32(10.99)
 	item := models.CreateItemInput{
-		Name: name,
+		Name:  name,
 		Price: price,
 	}
 	var expected models.Item

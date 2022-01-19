@@ -1,12 +1,13 @@
 package services
+
 // The services layer is responsible for the business logic of the application.
 // The service layer will delegate reading and writing data to the repositories and external API clients,
 // so that it can focus on the business logic.
 
 import (
+	"log"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/repository"
-	"log"
 )
 
 type ItemService interface {

@@ -5,9 +5,8 @@ import (
 	"github.com/nsavelyeva/go-shopping/routers"
 )
 
-
 func main() {
 	router := routers.Setup()
 
-	endless.ListenAndServe(":8080", router)   // instead of router.Run()
+	endless.ListenAndServe(":8080", router) // instead of router.Run()
 }
