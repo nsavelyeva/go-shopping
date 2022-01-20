@@ -1,3 +1,4 @@
+TODO: update!
 The project `go-shopping` is a playground to practice writing an HTTP service in `GoLang` using `gin` and `gorm`.
 
 The project represents a back-end microservice that serves HTTP calls to do basic CRUD (create/read/update/delete) operations
