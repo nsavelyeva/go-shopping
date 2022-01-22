@@ -53,7 +53,7 @@ func (h *itemHandler) GetItemService() services.ItemService {
 // GET /items - List all items
 func (h *itemHandler) ListItems(c *gin.Context) {
 	s := h.GetItemService()
-	items, err := s.ListItems()
+	items, err_p := s.ListItems()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
