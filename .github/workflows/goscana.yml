@@ -1,4 +1,4 @@
-name: Static Checks
+name: Goscana
 on:
   pull_request:
     branches:
@@ -63,5 +63,5 @@ jobs:
       - name: check
         uses: nsavelyeva/goscana@master
         with:
-          run: gosec
+          scan: gosec
           options: "-exclude=G104"
