@@ -4,12 +4,14 @@ package handlers
 // calling out the relevant service and then returning a response to the caller.
 
 import (
-	"log"
-	"net/http"
+
 
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/services"
+
+	"log"
+	"net/http"
 )
 
 // ItemHandler is an interface for itemHandler struct
