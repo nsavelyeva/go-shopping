@@ -14,6 +14,7 @@ jobs:
         uses: nsavelyeva/goscana@master
         with:
           scan: imports
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   errcheck:
     name: Errcheck
@@ -24,6 +25,7 @@ jobs:
         uses: nsavelyeva/goscana@master
         with:
           scan: errcheck
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   lint:
     name: Lint
@@ -34,6 +36,7 @@ jobs:
         uses: nsavelyeva/goscana@master
         with:
           scan: golint
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   shadow:
     name: Shadow
@@ -44,6 +47,7 @@ jobs:
         uses: nsavelyeva/goscana@master
         with:
           scan: shadow
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   staticcheck:
     name: StaticCheck
@@ -54,6 +58,7 @@ jobs:
         uses: nsavelyeva/goscana@master
         with:
           scan: staticcheck
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   sec:
     name: Gosec
@@ -65,3 +70,4 @@ jobs:
         with:
           scan: gosec
           options: "-exclude=G104"
+          token: ${{ secrets.GITHUB_TOKEN }}
