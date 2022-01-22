@@ -1,8 +1,8 @@
 name: Static Checks
 on:
-#  pull_request:
-#    branches:
-#      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   imports:
@@ -11,10 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: check
-        uses: grandcolline/golang-github-actions@v1.1.0
+        uses: nsavelyeva/goscana@master
         with:
-          run: imports
-          token: ${{ secrets.GITHUB_TOKEN }}
+          scan: imports
 
   errcheck:
     name: Errcheck
@@ -22,10 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: check
-        uses: grandcolline/golang-github-actions@v1.1.0
+        uses: nsavelyeva/goscana@master
         with:
-          run: errcheck
-          token: ${{ secrets.GITHUB_TOKEN }}
+          scan: errcheck
 
   lint:
     name: Lint
@@ -33,10 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: check
-        uses: grandcolline/golang-github-actions@v1.1.0
+        uses: nsavelyeva/goscana@master
         with:
-          run: lint
-          token: ${{ secrets.GITHUB_TOKEN }}
+          scan: golint
 
   shadow:
     name: Shadow
@@ -44,10 +41,9 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: check
-        uses: grandcolline/golang-github-actions@v1.1.0
+        uses: nsavelyeva/goscana@master
         with:
-          run: shadow
-          token: ${{ secrets.GITHUB_TOKEN }}
+          scan: shadow
 
   staticcheck:
     name: StaticCheck
@@ -55,19 +51,17 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: check
-        uses: grandcolline/golang-github-actions@v1.1.0
+        uses: nsavelyeva/goscana@master
         with:
-          run: staticcheck
-          token: ${{ secrets.GITHUB_TOKEN }}
+          scan: staticcheck
 
   sec:
-    name: Sec
+    name: Gosec
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - name: check
-        uses: grandcolline/golang-github-actions@v1.1.0
+        uses: nsavelyeva/goscana@master
         with:
-          run: sec
-          token: ${{ secrets.GITHUB_TOKEN }}
-          flags: "-exclude=G104"
+          run: gosec
+          options: "-exclude=G104"
