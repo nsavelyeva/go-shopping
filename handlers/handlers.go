@@ -4,12 +4,14 @@ package handlers
 // calling out the relevant service and then returning a response to the caller.
 
 import (
-	"log"
-	"net/http"
+
 
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/services"
+
+	"log"
+	"net/http"
 )
 
 // ItemHandler is an interface for itemHandler struct
@@ -51,7 +53,7 @@ func (h *itemHandler) GetItemService() services.ItemService {
 // GET /items - List all items
 func (h *itemHandler) ListItems(c *gin.Context) {
 	s := h.GetItemService()
-	items, err := s.ListItems()
+	items, err_p := s.ListItems()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
