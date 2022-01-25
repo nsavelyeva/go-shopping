@@ -5,17 +5,15 @@ package services
 // TODO: increase test coverage
 
 import (
-
+	"errors"
+	"reflect"
+	"testing"
 
 	"github.com/nsavelyeva/go-shopping/models"
 	"github.com/nsavelyeva/go-shopping/test"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
-	"errors"
-	"reflect"
-	"testing"
 )
 
 /*
