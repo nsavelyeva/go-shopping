@@ -47,7 +47,10 @@ func (r *itemRepository) isItemComplete(item *models.Item) bool {
 
 func (r *itemRepository) ListItems() ([]models.Item, error) {
 	var items []models.Item
-	r.db.Find(&items)
+	err := r.db.Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
 
 	return items, nil
 }

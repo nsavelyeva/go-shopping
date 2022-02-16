@@ -12,6 +12,7 @@ package repository
 
 import (
 	"errors"
+	"github.com/nsavelyeva/go-shopping/models"
 	"testing"
 
 	mocket "github.com/selvatico/go-mocket"
@@ -32,6 +33,57 @@ func SetupMockRepository() *ItemRepository {
 	r := *NewItemRepository(dialect, new(gorm.Config))
 	return &r
 }
+
+// Tests for ListItems()
+
+func Test_repository_ListItems_Found(t *testing.T) {
+	wantReply := []map[string]interface{}{
+		{"name": "item 1", "price": float32(10), "sold": true},
+		{"name": "item 2", "price": float32(20), "sold": false},
+	}
+	q := "SELECT * FROM `items` WHERE `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithReply(wantReply)
+
+	r := *SetupMockRepository()
+	items, err := r.ListItems()
+
+	assert.Nil(t, err)
+	for i, _ := range wantReply {
+		assert.Equal(t, wantReply[i]["name"], *items[i].Name)
+		assert.Equal(t, wantReply[i]["price"], *items[i].Price)
+		assert.Equal(t, wantReply[i]["sold"], *items[i].Sold)
+
+		assert.NotNil(t, items[i].ID)
+		assert.NotNil(t, items[i].CreatedAt)
+		assert.NotNil(t, items[i].UpdatedAt)
+		assert.False(t, items[i].DeletedAt.Valid)
+	}
+}
+
+func Test_repository_ListItems_NotFound(t *testing.T) {
+	q := "SELECT * FROM `items` WHERE `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
+
+	r := *SetupMockRepository()
+	items, err := r.ListItems()
+
+	assert.Equal(t, []models.Item{}, items)
+	assert.Nil(t, err)
+}
+
+func Test_repository_ListItems_ErrorSQL(t *testing.T) {
+	wantErr := errors.New("some SQL error")
+	q := "SELECT * FROM `items` WHERE `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithError(wantErr)
+
+	r := *SetupMockRepository()
+	items, err := r.ListItems()
+
+	assert.Nil(t, items)
+	assert.Equal(t, wantErr, err)
+}
+
+// Tests for FindItem()
 
 func Test_repository_FindItem_Found(t *testing.T) {
 	wantReply := []map[string]interface{}{{"name": "first", "price": 100, "sold": true}}
