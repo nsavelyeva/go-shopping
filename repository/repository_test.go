@@ -12,9 +12,9 @@ package repository
 
 import (
 	"errors"
-	"github.com/nsavelyeva/go-shopping/models"
 	"testing"
 
+	"github.com/nsavelyeva/go-shopping/models"
 	mocket "github.com/selvatico/go-mocket"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
@@ -48,7 +48,7 @@ func Test_repository_ListItems_Found(t *testing.T) {
 	items, err := r.ListItems()
 
 	assert.Nil(t, err)
-	for i, _ := range wantReply {
+	for i := range wantReply {
 		assert.Equal(t, wantReply[i]["name"], *items[i].Name)
 		assert.Equal(t, wantReply[i]["price"], *items[i].Price)
 		assert.Equal(t, wantReply[i]["sold"], *items[i].Sold)
@@ -142,6 +142,52 @@ func Test_repository_FindItem_ErrorGo(t *testing.T) {
 	item, found, err := r.FindItem("1")
 
 	assert.False(t, found)
+	assert.Nil(t, item)
+	assert.Equal(t, wantErr, err)
+}
+
+// Tests for CreateItem()
+
+func Test_repository_CreateItem_Created(t *testing.T) {
+	input := &models.CreateItemInput{
+		Name:  "item",
+		Price: 10,
+	}
+	q := "INSERT INTO `items` (`created_at`,`updated_at`,`deleted_at`,`name`,`price`,`sold`) VALUES (?,?,?,?,?,?)"
+	query := mocket.Catcher.Reset().NewMock().WithQuery(q).WithID(1).WithRowsNum(1)
+	itemID := query.LastInsertID
+	rowsAffected := query.RowsAffected
+
+	r := *SetupMockRepository()
+	item, err := r.CreateItem(input)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, input.Name, *item.Name)
+	assert.Equal(t, float32(input.Price), *item.Price)
+	assert.False(t, *item.Sold)
+
+	assert.Equal(t, uint(itemID), item.ID)
+	assert.Equal(t, int64(1), rowsAffected)
+
+	assert.NotNil(t, item.CreatedAt)
+	assert.NotNil(t, item.UpdatedAt)
+	assert.Equal(t, item.CreatedAt, item.UpdatedAt)
+	assert.False(t, item.DeletedAt.Valid)
+}
+
+func Test_repository_CreateItem_ErrorSQL(t *testing.T) {
+	input := &models.CreateItemInput{
+		Name:  "item",
+		Price: 10,
+	}
+	wantErr := errors.New("some SQL error")
+	q := "INSERT INTO `items` (`created_at`,`updated_at`,`deleted_at`,`name`,`price`,`sold`) VALUES (?,?,?,?,?,?)"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithError(wantErr)
+
+	r := *SetupMockRepository()
+	item, err := r.CreateItem(input)
+
 	assert.Nil(t, item)
 	assert.Equal(t, wantErr, err)
 }
