@@ -1,0 +1,97 @@
+name: Goscana
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  errcheck:
+    name: Errcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: errcheck
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  gofmt:
+    name: Fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: gofmt
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  imports:
+    name: Imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: imports
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: golint
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+
+  sec:
+    name: Gosec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: gosec
+          options: "-exclude=G104"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  shadow:
+    name: Shadow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: shadow
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  staticcheck:
+    name: StaticCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: staticcheck
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+
+  govet:
+    name: Govet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: nsavelyeva/goscana@master
+        with:
+          scan: govet
+          token: ${{ secrets.GITHUB_TOKEN }}
