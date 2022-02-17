@@ -8,7 +8,7 @@ type CreateItemInput struct {
 
 // UpdateItemInput is a struct to keep JSON data for HTTP requests to update Item
 type UpdateItemInput struct {
-	Name  string  `json:"name"`
-	Price float32 `json:"price"`
-	Sold  bool    `json:"sold"`
+	Name  *string  `json:"name"`
+	Price *float32 `json:"price"`
+	Sold  *bool    `json:"sold"`
 }

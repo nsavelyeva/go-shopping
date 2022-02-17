@@ -4,8 +4,10 @@ package handlers
 // calling out the relevant service and then returning a response to the caller.
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nsavelyeva/go-shopping/models"
@@ -61,8 +63,14 @@ func (h *itemHandler) ListItems(c *gin.Context) {
 
 // GET /items/:id - Find an item
 func (h *itemHandler) FindItem(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad id value: %s", err)})
+		return
+	}
 	s := h.GetItemService()
-	item, found, err := s.FindItem(c.Param("id"))
+	item, found, err := s.FindItem(id)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "item not found"})
 		return
@@ -95,6 +103,11 @@ func (h *itemHandler) CreateItem(c *gin.Context) {
 
 // PATCH /items/:id - Update an item
 func (h *itemHandler) UpdateItem(c *gin.Context) {
+	id, e := strconv.Atoi(c.Param("id"))
+	if e != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad id value: %s", e)})
+		return
+	}
 	// Validate input
 	var input models.UpdateItemInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -103,7 +116,7 @@ func (h *itemHandler) UpdateItem(c *gin.Context) {
 	}
 
 	s := h.GetItemService()
-	item, err := s.UpdateItem(c.Param("id"), input)
+	item, err := s.UpdateItem(id, input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -113,8 +126,13 @@ func (h *itemHandler) UpdateItem(c *gin.Context) {
 
 // DELETE /items/:id - Delete an item
 func (h *itemHandler) DeleteItem(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad id value: %s", err)})
+		return
+	}
 	s := h.GetItemService()
-	if err := s.DeleteItem(c.Param("id")); err != nil {
+	if err := s.DeleteItem(id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "item not found"})
 		return
 	}

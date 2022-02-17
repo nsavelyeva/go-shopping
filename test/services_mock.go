@@ -24,7 +24,7 @@ func (m *ItemService) ListItems() ([]models.Item, error) {
 }
 
 // FindItem is a mock method for ItemService struct
-func (m *ItemService) FindItem(id string) (*models.Item, bool, error) {
+func (m *ItemService) FindItem(id int) (*models.Item, bool, error) {
 	args := m.Called(id)
 	return args.Get(0).(*models.Item), args.Get(1).(bool), args.Error(2)
 }
@@ -36,13 +36,13 @@ func (m *ItemService) CreateItem(input models.CreateItemInput) (*models.Item, er
 }
 
 // UpdateItem is a mock method for ItemService struct
-func (m *ItemService) UpdateItem(id string, input models.UpdateItemInput) (*models.Item, error) {
+func (m *ItemService) UpdateItem(id int, input models.UpdateItemInput) (*models.Item, error) {
 	args := m.Called(id, input)
 	return args.Get(0).(*models.Item), args.Error(1)
 }
 
 // DeleteItem is a mock method for ItemService struct
-func (m *ItemService) DeleteItem(id string) error {
+func (m *ItemService) DeleteItem(id int) error {
 	args := m.Called(id)
 	return args.Error(0)
 }
