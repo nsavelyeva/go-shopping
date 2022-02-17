@@ -14,10 +14,10 @@ import (
 // ItemService is an interface for itemService struct
 type ItemService interface {
 	ListItems() ([]models.Item, error)
-	FindItem(id string) (*models.Item, bool, error)
+	FindItem(id int) (*models.Item, bool, error)
 	CreateItem(input models.CreateItemInput) (*models.Item, error)
-	UpdateItem(id string, input models.UpdateItemInput) (*models.Item, error)
-	DeleteItem(id string) error
+	UpdateItem(id int, input models.UpdateItemInput) (*models.Item, error)
+	DeleteItem(id int) error
 }
 
 type itemService struct {
@@ -48,7 +48,7 @@ func (s *itemService) ListItems() ([]models.Item, error) {
 	return items, err
 }
 
-func (s *itemService) FindItem(id string) (*models.Item, bool, error) {
+func (s *itemService) FindItem(id int) (*models.Item, bool, error) {
 	r := s.GetItemRepository()
 	item, found, err := r.FindItem(id)
 	return item, found, err
@@ -61,14 +61,14 @@ func (s *itemService) CreateItem(input models.CreateItemInput) (*models.Item, er
 	return item, err
 }
 
-func (s *itemService) UpdateItem(id string, input models.UpdateItemInput) (*models.Item, error) {
+func (s *itemService) UpdateItem(id int, input models.UpdateItemInput) (*models.Item, error) {
 	// Assumed input is validated on upper (handlers) layer
 	r := s.GetItemRepository()
 	item, err := r.UpdateItem(id, &input)
 	return item, err
 }
 
-func (s *itemService) DeleteItem(id string) error {
+func (s *itemService) DeleteItem(id int) error {
 	r := s.GetItemRepository()
 	err := r.DeleteItem(id)
 	return err

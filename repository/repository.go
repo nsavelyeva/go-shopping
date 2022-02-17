@@ -4,20 +4,18 @@ package repository
 
 import (
 	"errors"
-	"log"
-	"strconv"
-
 	"github.com/nsavelyeva/go-shopping/models"
 	"gorm.io/gorm"
+	"log"
 )
 
 // ItemRepository is an interface for the struct itemRepository
 type ItemRepository interface {
 	ListItems() ([]models.Item, error)
-	FindItem(id string) (*models.Item, bool, error)
+	FindItem(id int) (*models.Item, bool, error)
 	CreateItem(input *models.CreateItemInput) (*models.Item, error)
-	UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error)
-	DeleteItem(id string) error
+	UpdateItem(id int, input *models.UpdateItemInput) (*models.Item, error)
+	DeleteItem(id int) error
 }
 
 type itemRepository struct {
@@ -55,11 +53,9 @@ func (r *itemRepository) ListItems() ([]models.Item, error) {
 	return items, nil
 }
 
-func (r *itemRepository) FindItem(id string) (*models.Item, bool, error) {
+func (r *itemRepository) FindItem(id int) (*models.Item, bool, error) {
 	var item models.Item
-	itemID, _ := strconv.Atoi(id)
-
-	err := r.db.First(&item, itemID).Error
+	err := r.db.First(&item, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, false, nil
@@ -86,23 +82,42 @@ func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item
 	return &item, nil
 }
 
-func (r *itemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error) {
+func (r *itemRepository) UpdateItem(id int, input *models.UpdateItemInput) (*models.Item, error) {
 	item, found, err := r.FindItem(id)
-	if err != nil || !found {
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		return nil, errors.New("item not found")
 	}
-	data := models.Item{
-		Name:  &input.Name,
-		Price: &input.Price,
-		Sold:  &input.Sold,
+
+    // if a field is missing in the update input, keep the old value for this field
+	name := input.Name
+	if name == nil {
+		name = item.Name
 	}
-	if err := r.db.Model(&item).Updates(data).Error; err != nil {
+	price := input.Price
+	if price == nil {
+		price = item.Price
+	}
+	sold := input.Sold
+	if sold == nil {
+		sold = item.Sold
+	}
+
+	data := models.Item{
+		Name:  name,
+		Price: price,
+		Sold:  sold,
+	}
+
+	if err = r.db.Model(&item).Where("`items`.`id` = ?", id).Updates(data).Error; err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
-func (r *itemRepository) DeleteItem(id string) error {
+func (r *itemRepository) DeleteItem(id int) error {
 	var item models.Item
 	if err := r.db.Where("id = ? ", id).Delete(&item).Error; err != nil {
 		return err

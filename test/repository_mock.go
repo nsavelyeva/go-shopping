@@ -22,7 +22,7 @@ func (m *ItemRepository) ListItems() ([]models.Item, error) {
 }
 
 // FindItem is a mock method for ItemRepository struct
-func (m *ItemRepository) FindItem(id string) (*models.Item, bool, error) {
+func (m *ItemRepository) FindItem(id int) (*models.Item, bool, error) {
 	args := m.Called(id)
 	return args.Get(0).(*models.Item), args.Get(1).(bool), args.Error(2)
 }
@@ -34,13 +34,13 @@ func (m *ItemRepository) CreateItem(input *models.CreateItemInput) (*models.Item
 }
 
 // UpdateItem is a mock method for ItemRepository struct
-func (m *ItemRepository) UpdateItem(id string, input *models.UpdateItemInput) (*models.Item, error) {
+func (m *ItemRepository) UpdateItem(id int, input *models.UpdateItemInput) (*models.Item, error) {
 	args := m.Called(id, input)
 	return args.Get(0).(*models.Item), args.Error(1)
 }
 
 // DeleteItem is a mock method for ItemRepository struct
-func (m *ItemRepository) DeleteItem(id string) error {
+func (m *ItemRepository) DeleteItem(id int) error {
 	args := m.Called(id)
 	return args.Error(0)
 }

@@ -12,6 +12,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/nsavelyeva/go-shopping/models"
@@ -91,7 +92,7 @@ func Test_repository_FindItem_Found(t *testing.T) {
 	mocket.Catcher.Reset().NewMock().WithQuery(q).WithReply(wantReply)
 
 	r := *SetupMockRepository()
-	item, found, err := r.FindItem("1")
+	item, found, err := r.FindItem(1)
 
 	assert.Nil(t, err)
 	assert.True(t, found)
@@ -111,7 +112,7 @@ func Test_repository_FindItem_NotFound(t *testing.T) {
 	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
 
 	r := *SetupMockRepository()
-	item, found, err := r.FindItem("1")
+	item, found, err := r.FindItem(1)
 
 	assert.False(t, found)
 	assert.Nil(t, item)
@@ -124,11 +125,26 @@ func Test_repository_FindItem_ErrorSQL(t *testing.T) {
 	mocket.Catcher.Reset().NewMock().WithQuery(q).WithError(wantErr)
 
 	r := *SetupMockRepository()
-	item, found, err := r.FindItem("1")
+	item, found, err := r.FindItem(1)
 
 	assert.False(t, found)
 	assert.Nil(t, item)
 	assert.Equal(t, wantErr, err)
+}
+
+func Test_repository_FindItem_ErrorBadIDs(t *testing.T) {
+	r := *SetupMockRepository()
+
+	for i := range []int{-1, 0} {
+		q := fmt.Sprintf("SELECT * FROM `items` WHERE `items`.`id` = %d AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1", i)
+		mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
+
+		item, found, err := r.FindItem(i)
+
+		assert.Nil(t, item)
+		assert.False(t, found)
+		assert.Nil(t, err)
+	}
 }
 
 func Test_repository_FindItem_ErrorGo(t *testing.T) {
@@ -139,7 +155,7 @@ func Test_repository_FindItem_ErrorGo(t *testing.T) {
 	mocket.Catcher.Reset().NewMock().WithQuery(q).WithReply(wantReply)
 
 	r := *SetupMockRepository()
-	item, found, err := r.FindItem("1")
+	item, found, err := r.FindItem(1)
 
 	assert.False(t, found)
 	assert.Nil(t, item)
@@ -190,4 +206,175 @@ func Test_repository_CreateItem_ErrorSQL(t *testing.T) {
 
 	assert.Nil(t, item)
 	assert.Equal(t, wantErr, err)
+}
+
+// Tests for UpdateItem()
+
+func Test_repository_UpdateItem_Updated(t *testing.T) {
+	name := "new name"
+	price := float32(20)
+	sold := true
+	notsold := false
+
+	inputs := []*models.UpdateItemInput{
+		&models.UpdateItemInput{Name: &name, Sold:  &notsold},
+		&models.UpdateItemInput{Price: &price, Sold:  &sold},
+		&models.UpdateItemInput{},
+	}
+	wantReply := []map[string]interface{}{{"name": "item", "price": float32(10), "sold": true}}
+	s := "SELECT * FROM `items` WHERE `items`.`id` = 2 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	u := "UPDATE `items` SET `updated_at`=?,`name`=?,`price`=?,`sold`=? WHERE `items`.`id` = ? AND `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(s).WithReply(wantReply)
+	mocket.Catcher.NewMock().WithQuery(u).WithRowsNum(1)
+
+	r := *SetupMockRepository()
+	for i := range inputs {
+		item, err := r.UpdateItem(2, inputs[i])
+		assert.Nil(t, err)
+
+		if inputs[i].Name == nil {
+			assert.Equal(t, wantReply[0]["name"], *item.Name)
+		} else {
+			assert.Equal(t, *inputs[i].Name, *item.Name)
+		}
+
+		if inputs[i].Price == nil {
+			assert.Equal(t, wantReply[0]["price"], *item.Price)
+		} else {
+			assert.Equal(t, *inputs[i].Price, *item.Price)
+		}
+
+		if inputs[i].Sold == nil {
+			assert.Equal(t, wantReply[0]["sold"], *item.Sold)
+		} else {
+			assert.Equal(t, *inputs[i].Sold, *item.Sold)
+		}
+
+		assert.False(t, item.DeletedAt.Valid)
+	}
+}
+
+func Test_repository_UpdateItem_NotFound(t *testing.T) {
+	name := "new name"
+	price := float32(20)
+	sold := false
+	input := &models.UpdateItemInput{
+		Name: &name,
+		Price: &price,
+		Sold:  &sold,
+	}
+	wantErr := errors.New("item not found")
+	q := "SELECT * FROM `items` WHERE `items`.`id` = 2 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
+
+	r := *SetupMockRepository()
+	item, err := r.UpdateItem(2, input)
+	assert.Nil(t, item)
+	assert.Equal(t, wantErr, err)
+}
+
+func Test_repository_UpdateItem_ErrorBadIDs(t *testing.T) {
+	wantErr := errors.New("item not found")
+	r := *SetupMockRepository()
+
+	for i := range []int{-1, 0} {
+		q := fmt.Sprintf("SELECT * FROM `items` WHERE `items`.`id` = %d AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1", i)
+		mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
+
+		item, err := r.UpdateItem(i, &models.UpdateItemInput{})
+
+		assert.Nil(t, item)
+		assert.Equal(t, wantErr, err)
+	}
+}
+
+func Test_repository_UpdateItem_ErrorSQLFind(t *testing.T) {
+	name := "new name"
+	price := float32(20)
+	sold := false
+	input := &models.UpdateItemInput{
+		Name: &name,
+		Price: &price,
+		Sold:  &sold,
+	}
+	wantErr := errors.New("some SQL error")
+	q := "SELECT * FROM `items` WHERE `items`.`id` = 2 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithError(wantErr)
+
+	r := *SetupMockRepository()
+	item, err := r.UpdateItem(2, input)
+	assert.Nil(t, item)
+	assert.Equal(t, wantErr, err)
+}
+
+func Test_repository_UpdateItem_ErrorSQLUpdate(t *testing.T) {
+	name := "new name"
+	input := &models.UpdateItemInput{Name: &name}
+	s := "SELECT * FROM `items` WHERE `items`.`id` = 2 AND `items`.`deleted_at` IS NULL ORDER BY `items`.`id` LIMIT 1"
+	wantReply := []map[string]interface{}{{"name": "item", "price": float32(10), "sold": true}}
+	mocket.Catcher.Reset().NewMock().WithQuery(s).WithReply(wantReply)
+
+	u := "UPDATE `items` SET `updated_at`=?,`name`=?,`price`=?,`sold`=? WHERE `items`.`id` = ? AND `items`.`deleted_at` IS NULL"
+	wantErr := errors.New("update SQL error")
+	mocket.Catcher.NewMock().WithQuery(u).WithError(wantErr)
+
+	r := *SetupMockRepository()
+	item, err := r.UpdateItem(2, input)
+	assert.Nil(t, item)
+	assert.Equal(t, wantErr, err)
+}
+
+// Tests for DeleteItem()
+
+func Test_repository_DeleteItem_Found(t *testing.T) {
+	q := "UPDATE `items` SET `deleted_at`=? WHERE id = ?  AND `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(1)
+
+	r := *SetupMockRepository()
+	err := r.DeleteItem(1)
+
+	assert.Nil(t, err)
+}
+
+func Test_repository_DeleteItem_NotFound(t *testing.T) {
+	q := "UPDATE `items` SET `deleted_at`=? WHERE id = ?  AND `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
+
+	r := *SetupMockRepository()
+	err := r.DeleteItem(1)
+
+	assert.Nil(t, err)
+}
+
+func Test_repository_DeleteItem_ErrorSQL(t *testing.T) {
+	wantErr := errors.New("some SQL error")
+	q := "UPDATE `items` SET `deleted_at`=? WHERE id = ?  AND `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithError(wantErr)
+
+	r := *SetupMockRepository()
+	err := r.DeleteItem(1)
+
+	assert.Equal(t, wantErr, err)
+}
+
+func Test_repository_DeleteItem_ErrorBadIDs(t *testing.T) {
+	q := "UPDATE `items` SET `deleted_at`=? WHERE id = ?  AND `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(0)
+
+	r := *SetupMockRepository()
+
+	for i := range []int{-1, 0} {
+		err := r.DeleteItem(i)
+		assert.Nil(t, err)
+	}
+}
+
+func Test_repository_DeleteItem_ErrorGo(t *testing.T) {
+	q := "UPDATE `items` SET `deleted_at`=? WHERE id = ?  AND `items`.`deleted_at` IS NULL"
+	mocket.Catcher.Reset().NewMock().WithQuery(q).WithRowsNum(1)
+
+	r := *SetupMockRepository()
+	err := r.DeleteItem(1)
+
+	assert.Nil(t, err)
 }
