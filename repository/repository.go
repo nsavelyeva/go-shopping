@@ -13,8 +13,8 @@ import (
 type ItemRepository interface {
 	ListItems() ([]models.Item, error)
 	FindItem(id int) (*models.Item, bool, error)
-	CreateItem(input *models.CreateItemInput) (*models.Item, error)
-	UpdateItem(id int, input *models.UpdateItemInput) (*models.Item, error)
+	CreateItem(input *models.Item) (*models.Item, error)
+	UpdateItem(id int, input *models.Item) (*models.Item, error)
 	DeleteItem(id int) error
 }
 
@@ -69,11 +69,11 @@ func (r *itemRepository) FindItem(id int) (*models.Item, bool, error) {
 	return &item, true, nil
 }
 
-func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item, error) {
+func (r *itemRepository) CreateItem(input *models.Item) (*models.Item, error) {
 	f := false
 	item := models.Item{
-		Name:  &input.Name,
-		Price: &input.Price,
+		Name:  input.Name,
+		Price: input.Price,
 		Sold:  &f,
 	}
 	if err := r.db.Save(&item).Error; err != nil {
@@ -82,45 +82,31 @@ func (r *itemRepository) CreateItem(input *models.CreateItemInput) (*models.Item
 	return &item, nil
 }
 
-func (r *itemRepository) UpdateItem(id int, input *models.UpdateItemInput) (*models.Item, error) {
-	item, found, err := r.FindItem(id)
-	if err != nil {
+func (r *itemRepository) UpdateItem(id int, input *models.Item) (*models.Item, error) {
+	item := models.Item{
+		Name:  input.Name,
+		Price: input.Price,
+		Sold:  input.Sold,
+	}
+
+	result := r.db.Model(&item).Where("`items`.`id` = ?", id).Updates(item)
+	if err := result.Error; err != nil {
 		return nil, err
 	}
-	if !found {
-		return nil, errors.New("item not found")
+	if result.RowsAffected == 0 {
+		return nil, errors.New("no item found to update")
 	}
-
-    // if a field is missing in the update input, keep the old value for this field
-	name := input.Name
-	if name == nil {
-		name = item.Name
-	}
-	price := input.Price
-	if price == nil {
-		price = item.Price
-	}
-	sold := input.Sold
-	if sold == nil {
-		sold = item.Sold
-	}
-
-	data := models.Item{
-		Name:  name,
-		Price: price,
-		Sold:  sold,
-	}
-
-	if err = r.db.Model(&item).Where("`items`.`id` = ?", id).Updates(data).Error; err != nil {
-		return nil, err
-	}
-	return item, nil
+	return &item, nil
 }
 
 func (r *itemRepository) DeleteItem(id int) error {
 	var item models.Item
-	if err := r.db.Where("id = ? ", id).Delete(&item).Error; err != nil {
+	result := r.db.Where("id = ? ", id).Delete(&item)
+	if err := result.Error; err != nil {
 		return err
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("no item found to delete")
 	}
 	return nil
 }

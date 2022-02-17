@@ -5,6 +5,7 @@ package services
 // so that it can focus on the business logic.
 
 import (
+	"errors"
 	"log"
 
 	"github.com/nsavelyeva/go-shopping/models"
@@ -57,14 +58,49 @@ func (s *itemService) FindItem(id int) (*models.Item, bool, error) {
 func (s *itemService) CreateItem(input models.CreateItemInput) (*models.Item, error) {
 	// Assumed input is validated on upper (handlers) layer
 	r := s.GetItemRepository()
-	item, err := r.CreateItem(&input)
+
+	sold := false
+	data := &models.Item{
+		Name:  &input.Name,
+		Price: &input.Price,
+		Sold:  &sold,
+	}
+	item, err := r.CreateItem(data)
 	return item, err
 }
 
 func (s *itemService) UpdateItem(id int, input models.UpdateItemInput) (*models.Item, error) {
 	// Assumed input is validated on upper (handlers) layer
 	r := s.GetItemRepository()
-	item, err := r.UpdateItem(id, &input)
+
+	item, found, err := r.FindItem(id)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, errors.New("item not found")
+	}
+
+	// if a field is missing in the update input, keep the old value for this field
+	name := input.Name
+	if name == nil {
+		name = item.Name
+	}
+	price := input.Price
+	if price == nil {
+		price = item.Price
+	}
+	sold := input.Sold
+	if sold == nil {
+		sold = item.Sold
+	}
+
+	data := &models.Item{
+		Name:  name,
+		Price: price,
+		Sold:  sold,
+	}
+	item, err = r.UpdateItem(id, data)
 	return item, err
 }
 
