@@ -237,8 +237,6 @@ func Test_repository_UpdateItem_Updated(t *testing.T) {
 	assert.Equal(t, *input.Name, *item.Name)
 	assert.Equal(t, *input.Price, *item.Price)
 	assert.Equal(t, *input.Sold, *item.Sold)
-
-    assert.False(t, item.DeletedAt.Valid)
 }
 
 func Test_repository_UpdateItem_NotFound(t *testing.T) {
