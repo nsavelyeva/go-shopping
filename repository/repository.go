@@ -4,9 +4,10 @@ package repository
 
 import (
 	"errors"
+	"log"
+
 	"github.com/nsavelyeva/go-shopping/models"
 	"gorm.io/gorm"
-	"log"
 )
 
 // ItemRepository is an interface for the struct itemRepository

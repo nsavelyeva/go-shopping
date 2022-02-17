@@ -171,7 +171,7 @@ func Test_repository_CreateItem_Created(t *testing.T) {
 	input := &models.Item{
 		Name:  &name,
 		Price: &price,
-		Sold: &sold,
+		Sold:  &sold,
 	}
 	q := "INSERT INTO `items` (`created_at`,`updated_at`,`deleted_at`,`name`,`price`,`sold`) VALUES (?,?,?,?,?,?)"
 	query := mocket.Catcher.Reset().NewMock().WithQuery(q).WithID(1).WithRowsNum(1)
@@ -203,7 +203,7 @@ func Test_repository_CreateItem_ErrorSQL(t *testing.T) {
 	input := &models.Item{
 		Name:  &name,
 		Price: &price,
-		Sold: &sold,
+		Sold:  &sold,
 	}
 	wantErr := errors.New("some SQL error")
 	q := "INSERT INTO `items` (`created_at`,`updated_at`,`deleted_at`,`name`,`price`,`sold`) VALUES (?,?,?,?,?,?)"
@@ -223,7 +223,7 @@ func Test_repository_UpdateItem_Updated(t *testing.T) {
 	price := float32(20)
 	sold := false
 	input := &models.Item{
-		Name: &name,
+		Name:  &name,
 		Price: &price,
 		Sold:  &sold,
 	}
@@ -246,7 +246,7 @@ func Test_repository_UpdateItem_NotFound(t *testing.T) {
 	price := float32(20)
 	sold := false
 	input := &models.Item{
-		Name: &name,
+		Name:  &name,
 		Price: &price,
 		Sold:  &sold,
 	}

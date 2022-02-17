@@ -5,12 +5,13 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/nsavelyeva/go-shopping/models"
-	"github.com/nsavelyeva/go-shopping/services"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/nsavelyeva/go-shopping/models"
+	"github.com/nsavelyeva/go-shopping/services"
 )
 
 // ItemHandler is an interface for itemHandler struct
@@ -102,9 +103,9 @@ func (h *itemHandler) CreateItem(c *gin.Context) {
 
 // PATCH /items/:id - Update an item
 func (h *itemHandler) UpdateItem(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad id value: %s", err)})
+	id, e := strconv.Atoi(c.Param("id"))
+	if e != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad id value: %s", e)})
 		return
 	}
 	// Validate input
