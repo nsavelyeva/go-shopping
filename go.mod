@@ -7,9 +7,9 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/stretchr/testify v1.7.0
-	gorm.io/driver/mysql v1.2.3
+	gorm.io/driver/mysql v1.3.2
 	gorm.io/driver/sqlite v1.2.6
-	gorm.io/gorm v1.22.5
+	gorm.io/gorm v1.23.1
 )
 
 require (
