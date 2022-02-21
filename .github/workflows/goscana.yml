@@ -1,8 +1,13 @@
 name: Goscana
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - master
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
 
 jobs:
   errcheck:
