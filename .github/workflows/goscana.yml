@@ -4,6 +4,11 @@ on:
     branches:
       - master
 
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
 jobs:
   errcheck:
     name: Errcheck
