@@ -1,6 +1,6 @@
 module github.com/nsavelyeva/go-shopping
 
-go 1.17
+go 1.19
 
 require (
 	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6
